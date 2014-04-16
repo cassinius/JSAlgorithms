@@ -1,0 +1,35 @@
+{
+  "name": "JSAlgorithms",
+  "version": "0.0.0",
+  "description": "JavaScript Algorithms and Data Structures for Graph extraction from images and Graph Analysis",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/cassinius/JSAlgorithms.git"
+  },
+  "keywords": [
+    "Javascript",
+    "Algorithms",
+    "image",
+    "preprocessing",
+    "graph",
+    "extraction",
+    "graph",
+    "analysis"
+  ],
+  "author": "Bernd Malle",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/cassinius/JSAlgorithms/issues"
+  },
+  "homepage": "https://github.com/cassinius/JSAlgorithms",
+  "devDependencies": {
+    "grunt": "^0.4.4",
+    "grunt-contrib-jshint": "~0.6.3",
+    "grunt-contrib-nodeunit": "~0.2.0",
+    "grunt-contrib-uglify": "~0.2.2"
+  }
+}
