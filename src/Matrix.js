@@ -76,4 +76,3 @@ var Matrix;
 
     setModule('Matrix', Matrix);
 })(Matrix || (Matrix = {}));
-//# sourceMappingURL=Matrix.js.map

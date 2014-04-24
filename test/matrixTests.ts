@@ -43,8 +43,8 @@ describe("Simple Matrix Tests", function() {
     });
 
     it("Should correctly add two matrices", function() {
-        var m1 = new M2D(3,3,2);
-        var m2 = new M2D(3,3,3);
+        var m1:Matrix.Matrix2D = new M2D(3,3,2);
+        var m2:Matrix.Matrix2D = new M2D(3,3,3);
         var add_expect = new M2D(3,3,5);
         var add_result = m1.add(m2);
         expect( JSON.stringify(add_expect.getArray()) ).to.equal( JSON.stringify(add_result.getArray()) );

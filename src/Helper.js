@@ -19,4 +19,3 @@ var Helper;
     initGEObject();
     setModule('setModule', setModule);
 })(Helper || (Helper = {}));
-//# sourceMappingURL=Helper.js.map

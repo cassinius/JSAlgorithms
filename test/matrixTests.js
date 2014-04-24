@@ -53,4 +53,3 @@ describe("Simple Matrix Tests", function () {
         expect(JSON.stringify(sub_expect.getArray())).to.equal(JSON.stringify(sub_result.getArray()));
     });
 });
-//# sourceMappingURL=matrixTests.js.map
