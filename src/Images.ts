@@ -82,17 +82,24 @@ module Images {
 
         toRgbaArray() : Array<number> {
             var rgba = new Uint8ClampedArray( this.width * this.height * 4);
-            var rgb = this.matrix.getArray();
+            var pixels = this.matrix.getArray();
             var pos = 0;
-            for( var i = 0; i < rgb.length; ++i ) {
-                var pix = rgb[i];
-                rgba[pos] = pix[0];
-                rgba[pos+1] = pix[1];
-                rgba[pos+2] = pix[2];
-                rgba[pos+3] = 1;
+            for( var i = 0; i < pixels.length; ++i ) {
+                rgba[pos] = rgba[pos+1] = rgba[pos+2] = pixels[i];
+                rgba[pos+3] = 255;
                 pos += 4;
             }
             return rgba;
+        }
+
+        fillRgbaArray(rgba: Array<number>) : void {
+            var pixels = this.matrix.getArray();
+            var pos = 0;
+            for( var i = 0; i < pixels.length; ++i ) {
+                rgba[pos] = rgba[pos+1] = rgba[pos+2] = pixels[i];
+                rgba[pos+3] = 255;
+                pos += 4;
+            }
         }
 
     }
