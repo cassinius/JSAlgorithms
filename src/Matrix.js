@@ -9,14 +9,29 @@ var Matrix;
             this.d2 = d2;
             this.arr_length = 0;
             this.arr_length = this.d1 * this.d2;
-            this.arr = new Uint32Array(this.arr_length);
+            this.arr = new Array(this.arr_length);
 
-            for (var i = 0; i < this.arr_length; ++i) {
-                this.arr[i] = fill ? fill : 0;
+            if (fill === fill) {
+                for (var i = 0; i < this.arr_length; ++i) {
+                    this.arr[i] = fill;
+                }
             }
         }
+        Matrix2D.generateMatrix = function (arr, d1, d2) {
+            if (arr.length !== d1 * d2) {
+                throw "Dimensions do not agree with given array!";
+            }
+            var matrix = new Matrix2D(d1, d2);
+            matrix.setArray(arr);
+            return matrix;
+        };
+
         Matrix2D.prototype.getArray = function () {
             return this.arr;
+        };
+
+        Matrix2D.prototype.setArray = function (arr) {
+            this.arr = arr;
         };
 
         Matrix2D.prototype.dim = function () {
@@ -28,7 +43,7 @@ var Matrix;
         };
 
         Matrix2D.prototype.get = function (i, j) {
-            var pos = this.d1 * j + i;
+            var pos = j * this.d1 + i;
             if (pos >= this.length()) {
                 throw "Index out of bounds";
             }
@@ -36,7 +51,7 @@ var Matrix;
         };
 
         Matrix2D.prototype.set = function (i, j, val) {
-            var pos = this.d1 * j + i;
+            var pos = j * this.d1 + i;
             if (pos >= this.length()) {
                 throw "Index out of bounds";
             }
@@ -57,7 +72,7 @@ var Matrix;
             return result;
         };
 
-        Matrix2D.prototype.subtract = function (other) {
+        Matrix2D.prototype.sub = function (other) {
             var dim_other = other.dim();
             if (this.d1 !== dim_other.d1 || this.d2 !== dim_other.d2) {
                 throw "Refusing to add 2 matrices of different dimensions!";
@@ -69,6 +84,38 @@ var Matrix;
                 }
             }
             return result;
+        };
+
+        Matrix2D.prototype.mult = function (other) {
+            var other_dim = other.dim();
+            if (this.d1 !== other_dim.d2) {
+                throw "Dimensions do now allow multiplication; refusing!";
+            }
+            var result = new Matrix2D(other_dim.d1, this.d2);
+
+            for (var j = 0; j < this.d2; ++j) {
+                for (var i = 0; i < other_dim.d1; ++i) {
+                    // result position => i, j
+                    var cur_res = 0;
+                    for (var k = 0; k < this.d1; ++k) {
+                        // console.log("Mult: " + this.get(k,j) + " * " + other.get(i,k));
+                        cur_res += this.get(k, j) * other.get(i, k);
+                    }
+                    result.set(i, j, cur_res);
+                }
+            }
+            return result;
+        };
+
+        Matrix2D.prototype.toString = function () {
+            console.log("Matrix representation:\n");
+            for (var j = 0; j < this.d2; ++j) {
+                process.stdout.write("[");
+                for (var i = 0; i < this.d1; ++i) {
+                    process.stdout.write(this.get(i, j) + " ");
+                }
+                console.log("]");
+            }
         };
         return Matrix2D;
     })();
