@@ -89,11 +89,11 @@ describe("Simple Matrix Tests", function() {
 
     // TODO find out what's wrong here...
     it("Should correctly multiply two matrices giving a non-quadratic result", function() {
-        var m1 = new M2D(7, 3, 4);
-        var m2 = new M2D(3, 7, 7);
+        var m1 = new M2D(7, 15, 4);
+        var m2 = new M2D(10, 7, 7);
         var prod_result = m1.mult(m2).getArray();
 
-        expect(prod_result.length).to.equal(12);
+        expect(prod_result.length).to.equal(150);
         for (var k = 0; k < prod_result.length; k++) {
             expect(prod_result[k]).to.equal(196);
         }
