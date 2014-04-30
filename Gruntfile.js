@@ -5,7 +5,7 @@ module.exports = function(grunt) {
         pkg: grunt.file.readJSON('package.json'),
         uglify: {
             build: {
-                src: 'src/**/*.js',
+                src: 'build/JSAlgorithms.js',
                 dest: 'build/JSAlgorithms.min.js'
             }
         },
@@ -34,17 +34,29 @@ module.exports = function(grunt) {
                 },
                 command: 'tsc **/*.ts'
             }
+        },
+        concat: {
+            options: {
+                separator: ''
+            },
+            dist: {
+                src: ['src/Helper.js', 'src/Matrix.js', 'src/Images.js',
+                      'test/browsertest.js'],
+                dest: 'build/JSAlgorithms.js'
+            }
         }
     });
 
     // Load the plugin that provides the "uglify" task.
+    grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks('grunt-shell');
 
     // Default task(s).
-    grunt.registerTask('default', ['uglify']);
+    // grunt.registerTask('default', ['uglify']);
     grunt.registerTask('mocha', 'shell:mocha');
     grunt.registerTask('compileTS', 'shell:compileTS');
+    grunt.registerTask('build', ['concat', 'uglify']);
 
 };
