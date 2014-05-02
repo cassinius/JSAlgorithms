@@ -94,4 +94,27 @@ describe("Simple Matrix Tests", function () {
             expect(prod_result[k]).to.equal(196);
         }
     });
+
+    it("Should correctly determine neighbors", function () {
+        var arr0 = [0,1,2,3,4,5];
+        var m0 = M2D.generateMatrix(arr0, 3, 2);
+        var m1 = new M2D(7, 15, 4);
+        var pixel0 = [1,0];
+        var pixel1 = [1,1];
+        var neighbors0 = m0.getNeighbors(pixel0);
+        var neighbors1 = m1.getNeighbors(pixel1);
+
+        expect(neighbors0.length).to.equal(5);
+        expect(neighbors0[0][2]).to.equal(0);
+        expect(neighbors0[1][2]).to.equal(3);
+        expect(neighbors0[2][2]).to.equal(4);
+        expect(neighbors0[3][2]).to.equal(2);
+        expect(neighbors0[4][2]).to.equal(5);
+
+        expect(neighbors1.length).to.equal(8);
+        for (var k = 0; k < neighbors1.length; k++) {
+            expect(neighbors1[k][2]).to.equal(4);
+        }
+        
+    });
 });

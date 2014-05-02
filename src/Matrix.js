@@ -117,6 +117,32 @@ var Matrix;
                 console.log("]");
             }
         };
+
+        Matrix2D.prototype.getNeighbors = function (pixel) {
+            var x = pixel[0];
+            var y = pixel[1];   
+            var arrayN = this.d1 - 1;  
+            var arrayM = this.d2 - 1;  
+    
+            neighborsArray = new Array();
+
+            for (var n = -1; n < 2; n++) {
+                if(x + n < 0 || x + n > arrayN) {
+                    continue;
+                }
+                for (var m = -1; m < 2; m++) {
+                    if(y + m < 0 || y + m > arrayM) {
+                        continue;
+                    }
+                    if(m == 0 && n == 0) {
+                        continue;
+                    }
+                    neighborsArray.push([x+n, y+m, this.get(x+n,y+m)]);
+                }
+            }
+    
+            return neighborsArray;
+        };
         return Matrix2D;
     })();
     Matrix.Matrix2D = Matrix2D;
