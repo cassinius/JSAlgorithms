@@ -115,6 +115,35 @@ module Matrix {
             return result;
         }
 
+
+        getNeighbors(pixel: Array) : Array {
+            var x = pixel[0];
+            var y = pixel[1];
+
+            var width = this.d1;
+            var height = this.d2;
+
+            var neighborsArray = [];
+
+            for (var n = -1; n < 2; n++) {
+                if(x + n < 0 || x + n >= width) {
+                    continue;
+                }
+                for (var m = -1; m < 2; m++) {
+                    if(y + m < 0 || y + m >= height) {
+                        continue;
+                    }
+                    if(m == 0 && n == 0) {
+                        continue;
+                    }
+                    neighborsArray.push([x+n, y+m, this.get(x+n,y+m)]);
+                }
+            }
+
+            return neighborsArray;
+        }
+
+
         toString(): void {
             console.log("Matrix representation:\n");
             for (var j = 0; j < this.d2; ++j) {

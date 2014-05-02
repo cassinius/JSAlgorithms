@@ -143,6 +143,8 @@ var Matrix;
     
             return neighborsArray;
         };
+
+
         return Matrix2D;
     })();
     Matrix.Matrix2D = Matrix2D;
