@@ -33,11 +33,44 @@ for (var i = 0; i < width * height * 4; ++i) {
 //
 //});
 describe("Simple RGB Image Tests", function () {
-    var img = new RgbImage(width, height, rgba);
-    var rgb = img.getArray();
-    expect(rgb.length).to.equal(width * height);
+    it("Should instantiate a rgb image correctly", function () {
+        var img = new RgbImage(width, height, rgba);
+        var rgb = img.getArray();
+        expect(rgb.length).to.equal(width * height);
 
-    // TODO Think about good test case for rgb values
-    var arr = img.toRgbaArray();
-    expect(arr.length).to.equal(width * height * 4);
+        // TODO Think about good test case for rgb values
+        var arr = img.toRgbaArray();
+        expect(arr.length).to.equal(width * height * 4);
+    });
+});
+
+describe("Get an adjacency list of a simple image", function () {
+    var width = 2;
+    var height = 2;
+    var rgba = new Array(width * height * 4);
+    for (var i = 0; i < width * height * 4; ++i) {
+        if (i % 4 === 3) {
+            rgba[i] = 1;
+        } else {
+            rgba[i] = (Math.random() * 256) >>> 0;
+        }
+    }
+    it("Should compute an adjacency matrix of correct dimensions", function () {
+        var img = new GrayImage(width, height, rgba);
+        var rgb = img.getArray();
+        var adj_list = img.computeAdjacencyList(true);
+
+        //    console.log(adj_list.dim());
+        //    console.log(adj_list.get(1,1));
+        //    console.log(adj_list.toString());
+        var dim_expect = JSON.stringify({ d1: width, d2: height });
+        var dim_result = JSON.stringify(adj_list.dim());
+        expect(dim_expect).to.equal(dim_result);
+
+        for (var i = 0; i < width; ++i) {
+            for (var j = 0; j < height; ++j) {
+                expect(adj_list.get(i, j).length).to.equal(3);
+            }
+        }
+    });
 });

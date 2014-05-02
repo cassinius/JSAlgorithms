@@ -26,6 +26,24 @@ var Matrix;
             return matrix;
         };
 
+        Matrix2D.copyMatrix = function (source) {
+            var dims = source.dim();
+            var dest = new Matrix2D(dims.d1, dims.d2);
+            for (var i = 0; i < dims.d1; ++i) {
+                for (var j = 0; j < dims.d2; ++j) {
+                    var px = source.get(i, j);
+                    if (typeof px === 'number') {
+                        dest.set(i, j, px);
+                    } else if (Array.isArray(px)) {
+                        dest.set(i, j, px.slice(0));
+                    } else {
+                        throw "Unsupported matrix field type!";
+                    }
+                }
+            }
+            return dest;
+        };
+
         Matrix2D.prototype.getArray = function () {
             return this.arr;
         };
@@ -107,6 +125,46 @@ var Matrix;
             return result;
         };
 
+        Matrix2D.prototype.getNeighbors = function (x, y, color) {
+            if (typeof color === "undefined") { color = false; }
+            var width = this.d1;
+            var height = this.d2;
+
+            var neighborsArray = [];
+
+            for (var n = -1; n < 2; n++) {
+                if (x + n < 0 || x + n >= width) {
+                    continue;
+                }
+                for (var m = -1; m < 2; m++) {
+                    if (y + m < 0 || y + m >= height) {
+                        continue;
+                    }
+                    if (m == 0 && n == 0) {
+                        continue;
+                    }
+                    if (color) {
+                        var pixel = this.get(x, y);
+
+                        if (typeof pixel === 'number') {
+                            neighborsArray.push([x + n, y + m, this.get(x, y) - this.get(x + n, y + m)]);
+                        } else if (Array.isArray(pixel)) {
+                            var graylevel_here = 0.2126 * pixel[0] + 0.7152 * pixel[1] + 0.0722 * pixel[2];
+                            var there = this.get(x + n, y + m);
+                            var graylevel_there = 0.2126 * there[0] + 0.7152 * there[1] + 0.0722 * there[2];
+                            neighborsArray.push([x + n, y + m, graylevel_here - graylevel_there]);
+                        } else {
+                            throw "Unsupported Matrix field type!";
+                        }
+                    } else {
+                        neighborsArray.push([x + n, y + m, this.get(x + n, y + m)]);
+                    }
+                }
+            }
+
+            return neighborsArray;
+        };
+
         Matrix2D.prototype.toString = function () {
             console.log("Matrix representation:\n");
             for (var j = 0; j < this.d2; ++j) {
@@ -117,34 +175,6 @@ var Matrix;
                 console.log("]");
             }
         };
-
-        Matrix2D.prototype.getNeighbors = function (pixel) {
-            var x = pixel[0];
-            var y = pixel[1];   
-            var arrayN = this.d1 - 1;  
-            var arrayM = this.d2 - 1;  
-    
-            neighborsArray = new Array();
-
-            for (var n = -1; n < 2; n++) {
-                if(x + n < 0 || x + n > arrayN) {
-                    continue;
-                }
-                for (var m = -1; m < 2; m++) {
-                    if(y + m < 0 || y + m > arrayM) {
-                        continue;
-                    }
-                    if(m == 0 && n == 0) {
-                        continue;
-                    }
-                    neighborsArray.push([x+n, y+m, this.get(x+n,y+m)]);
-                }
-            }
-    
-            return neighborsArray;
-        };
-
-
         return Matrix2D;
     })();
     Matrix.Matrix2D = Matrix2D;

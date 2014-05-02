@@ -34,6 +34,26 @@ module Matrix {
             return matrix;
         }
 
+        static copyMatrix(source: Matrix2D) : Matrix2D {
+            var dims = source.dim();
+            var dest = new Matrix2D(dims.d1, dims.d2);
+            for( var i = 0; i < dims.d1; ++i ) {
+                for( var j = 0; j < dims.d2; ++j ) {
+                    var px = source.get(i, j);
+                    if( typeof px === 'number') {
+                        dest.set(i, j, px);
+                    }
+                    else if( Array.isArray(px) ) {
+                        dest.set(i, j, px.slice(0));
+                    }
+                    else {
+                        throw "Unsupported matrix field type!";
+                    }
+                }
+            }
+            return dest;
+        }
+
         getArray() : Array<any> {
             return this.arr;
         }
@@ -116,10 +136,7 @@ module Matrix {
         }
 
 
-        getNeighbors(pixel: Array) : Array {
-            var x = pixel[0];
-            var y = pixel[1];
-
+        getNeighbors(x: number, y: number, color: boolean = false) : Array<any> {
             var width = this.d1;
             var height = this.d2;
 
@@ -136,7 +153,25 @@ module Matrix {
                     if(m == 0 && n == 0) {
                         continue;
                     }
-                    neighborsArray.push([x+n, y+m, this.get(x+n,y+m)]);
+                    if( color ) {
+                        var pixel:any[] = this.get(x, y);
+
+                        if( typeof pixel === 'number' ) { // already a Gray Image
+                            neighborsArray.push([x + n, y + m, this.get(x, y) - this.get(x + n, y + m)]);
+                        }
+                        else if( Array.isArray(pixel) ) { // RGB conversion !
+                            var graylevel_here =  0.2126*pixel[0] + 0.7152*pixel[1] + 0.0722*pixel[2];
+                            var there = this.get(x + n, y + m);
+                            var graylevel_there = 0.2126*there[0] + 0.7152*there[1] + 0.0722*there[2];
+                            neighborsArray.push([x + n, y + m, graylevel_here - graylevel_there]);
+                        }
+                        else {
+                            throw "Unsupported Matrix field type!";
+                        }
+                    }
+                    else {
+                        neighborsArray.push([x + n, y + m, this.get(x + n, y + m)]);
+                    }
                 }
             }
 

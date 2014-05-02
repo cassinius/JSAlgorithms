@@ -93,6 +93,18 @@ var Images;
                 pos += 4;
             }
         };
+
+        GrayImage.prototype.computeAdjacencyList = function (color) {
+            var adj_list = new Matrix.Matrix2D(this.width, this.height);
+
+            for (var x = 0; x < this.width; ++x) {
+                for (var y = 0; y < this.height; ++y) {
+                    adj_list.set(x, y, this.matrix.getNeighbors(x, y, color));
+                }
+            }
+
+            return adj_list;
+        };
         return GrayImage;
     })();
     Images.GrayImage = GrayImage;

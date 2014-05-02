@@ -27,6 +27,16 @@ describe("Simple Matrix Tests", function() {
         expect(JSON.stringify(m.getArray())).to.equal(JSON.stringify(arr_expect));
     });
 
+    it("Should correctly copy a matrix", function() {
+        var source: Matrix.Matrix2D = new M2D(15, 7, 44);
+        var dest: Matrix.Matrix2D = M2D.copyMatrix(source);
+        var expected = JSON.stringify(source);
+        var result = JSON.stringify(dest);
+//        console.log(expected);
+//        console.log(result);
+        expect(result).to.equal(expected);
+    });
+
     it("Should get and set correct values", function() {
         var d1 = 5,
             d2 = 4,
@@ -98,5 +108,44 @@ describe("Simple Matrix Tests", function() {
             expect(prod_result[k]).to.equal(196);
         }
     });
+
+    it("Should correctly determine neighbors (without color diff)", function () {
+        var arr0 = [0,1,2,3,4,5];
+        var m0 = M2D.generateMatrix(arr0, 3, 2);
+        var m1 = new M2D(7, 15, 4);
+
+        var neighbors0 = m0.getNeighbors(1, 0);
+        var neighbors1 = m1.getNeighbors(1, 1);
+        var neighbors2 = m0.getNeighbors(1, 0, true);
+
+        expect(neighbors0.length).to.equal(5);
+        expect(neighbors0[0][2]).to.equal(0);
+        expect(neighbors0[1][2]).to.equal(3);
+        expect(neighbors0[2][2]).to.equal(4);
+        expect(neighbors0[3][2]).to.equal(2);
+        expect(neighbors0[4][2]).to.equal(5);
+
+        expect(neighbors1.length).to.equal(8);
+        for (var k = 0; k < neighbors1.length; k++) {
+            expect(neighbors1[k][2]).to.equal(4);
+        }
+
+    });
+
+
+    it("Should correctly determine neighbors (without color diff)", function () {
+        var arr0 = [0,1,2,3,4,5];
+        var m0 = M2D.generateMatrix(arr0, 3, 2);
+        var m1 = new M2D(7, 15, 4);
+        var neighbors2 = m0.getNeighbors(1, 0, true);
+
+        expect(neighbors2.length).to.equal(5);
+        expect(neighbors2[0][2]).to.equal(1);
+        expect(neighbors2[1][2]).to.equal(-2);
+        expect(neighbors2[2][2]).to.equal(-3);
+        expect(neighbors2[3][2]).to.equal(-1);
+        expect(neighbors2[4][2]).to.equal(-4);
+    });
+
 
 });

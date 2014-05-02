@@ -33,6 +33,13 @@ module.exports = function(grunt) {
                     stderr: true
                 },
                 command: 'tsc **/*.ts'
+            },
+            copyMin: {
+                options: {
+                    stdout: true,
+                    stderr: true
+                },
+                command: 'cp build/JSAlgorithms.min.js /var/www/html/imgextract/js/'
             }
         },
         concat: {
@@ -40,7 +47,7 @@ module.exports = function(grunt) {
                 separator: ''
             },
             dist: {
-                src: ['src/Helper.js', 'src/Matrix.js', 'src/Images.js',
+                src: ['src/Helper.js', 'src/Matrix.js', 'src/Images.js',                                'src/Graphs.js',
                       'test/browsertest.js'],
                 dest: 'build/JSAlgorithms.js'
             }
@@ -57,6 +64,6 @@ module.exports = function(grunt) {
     // grunt.registerTask('default', ['uglify']);
     grunt.registerTask('mocha', 'shell:mocha');
     grunt.registerTask('compileTS', 'shell:compileTS');
-    grunt.registerTask('build', ['concat', 'uglify']);
+    grunt.registerTask('build', ['concat', 'uglify', 'shell:copyMin']);
 
 };

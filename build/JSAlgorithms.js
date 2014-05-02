@@ -47,6 +47,24 @@ var Matrix;
             return matrix;
         };
 
+        Matrix2D.copyMatrix = function (source) {
+            var dims = source.dim();
+            var dest = new Matrix2D(dims.d1, dims.d2);
+            for (var i = 0; i < dims.d1; ++i) {
+                for (var j = 0; j < dims.d2; ++j) {
+                    var px = source.get(i, j);
+                    if (typeof px === 'number') {
+                        dest.set(i, j, px);
+                    } else if (Array.isArray(px)) {
+                        dest.set(i, j, px.slice(0));
+                    } else {
+                        throw "Unsupported matrix field type!";
+                    }
+                }
+            }
+            return dest;
+        };
+
         Matrix2D.prototype.getArray = function () {
             return this.arr;
         };
@@ -126,6 +144,46 @@ var Matrix;
                 }
             }
             return result;
+        };
+
+        Matrix2D.prototype.getNeighbors = function (x, y, color) {
+            if (typeof color === "undefined") { color = false; }
+            var width = this.d1;
+            var height = this.d2;
+
+            var neighborsArray = [];
+
+            for (var n = -1; n < 2; n++) {
+                if (x + n < 0 || x + n >= width) {
+                    continue;
+                }
+                for (var m = -1; m < 2; m++) {
+                    if (y + m < 0 || y + m >= height) {
+                        continue;
+                    }
+                    if (m == 0 && n == 0) {
+                        continue;
+                    }
+                    if (color) {
+                        var pixel = this.get(x, y);
+
+                        if (typeof pixel === 'number') {
+                            neighborsArray.push([x + n, y + m, this.get(x, y) - this.get(x + n, y + m)]);
+                        } else if (Array.isArray(pixel)) {
+                            var graylevel_here = 0.2126 * pixel[0] + 0.7152 * pixel[1] + 0.0722 * pixel[2];
+                            var there = this.get(x + n, y + m);
+                            var graylevel_there = 0.2126 * there[0] + 0.7152 * there[1] + 0.0722 * there[2];
+                            neighborsArray.push([x + n, y + m, graylevel_here - graylevel_there]);
+                        } else {
+                            throw "Unsupported Matrix field type!";
+                        }
+                    } else {
+                        neighborsArray.push([x + n, y + m, this.get(x + n, y + m)]);
+                    }
+                }
+            }
+
+            return neighborsArray;
         };
 
         Matrix2D.prototype.toString = function () {
@@ -239,18 +297,137 @@ var Images;
                 pos += 4;
             }
         };
+
+        GrayImage.prototype.computeAdjacencyList = function (color) {
+            var adj_list = new Matrix.Matrix2D(this.width, this.height);
+
+            for (var x = 0; x < this.width; ++x) {
+                for (var y = 0; y < this.height; ++y) {
+                    adj_list.set(x, y, this.matrix.getNeighbors(x, y, color));
+                }
+            }
+
+            return adj_list;
+        };
         return GrayImage;
     })();
     Images.GrayImage = GrayImage;
 
     setModule('Images', Images);
 })(Images || (Images = {}));
+/// <reference path="../tsrefs/node.d.ts" />
+/// <reference path="./Helper.ts" />
+/// <reference path="./Matrix.ts" />
+/// <reference path="./Images.ts" />
+
+var M2D = Matrix.Matrix2D;
+var GrayImg = Images.GrayImage;
+var RgbImg = Images.RgbImage;
+
+var Graphs;
+(function (Graphs) {
+    var Graph = (function () {
+        function Graph(adj_list) {
+            this.adj_list = adj_list;
+            this.edge_list = this.computeEdgeList();
+        }
+        Graph.prototype.computeEdgeList = function () {
+            var adj_tmp = Matrix.Matrix2D.copyMatrix(this.adj_list);
+            var dims = adj_tmp.dim();
+            var visited = new Matrix.Matrix2D(dims.d1, dims.d2, 0);
+
+            var edges = new Array();
+
+            for (var i = 0; i < dims.d1; ++i) {
+                for (var j = 0; j < dims.d2; ++j) {
+                    // mark the pixel visited (=> add no more edges to this one)
+                    visited.set(i, j, 1);
+
+                    // get connected pixels
+                    var neighbors = adj_tmp.get(i, j);
+
+                    for (var k = 0; k < neighbors.length; ++k) {
+                        var n = neighbors[k];
+
+                        // this neighbor already visited? => continue
+                        if (visited.get(n[0], n[1])) {
+                            continue;
+                        }
+                        var edge = {
+                            p1: [i, j],
+                            p2: [n[0], n[1]],
+                            w: n[2]
+                        };
+
+                        //                        // now we have to delete the opposite edge
+                        //                        var dest_px_neighbors = adj_tmp.get(n[0], n[1]);
+                        //                        for( var l = 0; l < dest_px_neighbors.length; ++l ) {
+                        //                            var potential = dest_px_neighbors[l];
+                        //                            if( potential[0] == i && potential[1] == j) {
+                        //                                dest_px_neighbors.splice(l, 1);
+                        //                            }
+                        //                        }
+                        edges.push(edge);
+                    }
+                }
+            }
+
+            return edges;
+        };
+        return Graph;
+    })();
+    Graphs.Graph = Graph;
+
+    setModule('Graphs', Graphs);
+})(Graphs || (Graphs = {}));
+var getGlobals = function() {
+    window.canvas = document.querySelector("#img_canvas");
+    window.ctx = canvas.getContext('2d');
+    window.img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+};
+
 
 var demoGrayScale = function() {
-    var canvas = document.querySelector("#img_canvas");
-    var ctx = canvas.getContext('2d');
-    var img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    var start = new Date().getTime();
+
+    getGlobals();
     var gray = new Images.GrayImage(canvas.width, canvas.height, img.data);
     var gray_array = gray.fillRgbaArray(img.data);
+
+    var time = new Date().getTime() - start;
+    console.log('Execution time: ' + time + 'ms');
+
     ctx.putImageData(img, 0, 0);
+};
+
+
+var demoAdjacencyList = function() {
+    var start = new Date().getTime();
+
+    getGlobals();
+    var grayImg = new Images.GrayImage(canvas.width, canvas.height, img.data);
+    var adj_list = grayImg.computeAdjacencyList(true);
+
+    var dims = adj_list.dim();
+    console.log("Adjacency List dimensions: " + dims.d1 + ", " + dims.d2);
+    var time = new Date().getTime() - start;
+    console.log('Execution time: ' + time + 'ms');
+};
+
+
+var demoEdgeListComputation = function() {
+    var start = new Date().getTime();
+
+    getGlobals();
+    var grayImg = new Images.GrayImage(canvas.width, canvas.height, img.data);
+    var adj_list = grayImg.computeAdjacencyList(true);
+    var graph = new Graphs.Graph(adj_list);
+
+    var time = new Date().getTime() - start;
+    console.error('Execution time: ' + time + 'ms');
+
+
+    // window.graph = graph;
+
+//    return graph.edge_list;
 };
