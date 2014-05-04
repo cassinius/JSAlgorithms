@@ -41,4 +41,19 @@ describe("Graph instantiation and computation of representation", function() {
 //        console.log(edge_list);
         expect(edge_list.length).to.equal(6);
     });
+
+
+    it("Should correctly sort the edgeList", function() {
+        var grayImg: Images.GrayImage = new GrayImage(width, height, rgba);
+        var adj_list: Matrix.Matrix2D = grayImg.computeAdjacencyList(true);
+        var graph = new Graph(adj_list, true);
+        var edge_list = graph.edge_list;
+
+        for( var i = 0; i < edge_list.length - 1; ++i ) {
+            expect( edge_list[i].w).to.be.lte( edge_list[i+1].w );
+        }
+
+//        console.log(edge_list);
+        expect(edge_list.length).to.equal(6);
+    });
 });

@@ -6,8 +6,6 @@
 declare function setModule(name: string, mod: any);
 
 var M2D = Matrix.Matrix2D;
-var GrayImg = Images.GrayImage;
-var RgbImg = Images.RgbImage;
 
 
 module Graphs {
@@ -21,16 +19,33 @@ module Graphs {
     export class Graph {
         edge_list: Edge[];
 
-        constructor(private adj_list: Matrix.Matrix2D) {
+        constructor(private adj_list: Matrix.Matrix2D, sort?:boolean, up?:boolean) {
             this.edge_list = this.computeEdgeList();
+            if( sort ) {
+                this.sort(up);
+            }
+        }
+
+        sort(up:boolean = true) {
+            var sortfunc;
+            if( up ) {
+                sortfunc = function(a, b) {return a.w - b.w};
+            }
+            else {
+                sortfunc = function(a, b) {return b.w - a.w};
+            }
+            this.edge_list.sort(sortfunc);
         }
 
         computeEdgeList() : Edge[] {
-            var adj_tmp = Matrix.Matrix2D.copyMatrix(this.adj_list);
+            var adj_tmp = this.adj_list;
             var dims = adj_tmp.dim();
             var visited: Matrix.Matrix2D = new Matrix.Matrix2D(dims.d1, dims.d2, 0);
 
             var edges: Edge[] = new Array();
+            var neighbors: Array<any>;
+            var nb: Array<number>;
+            var edge: Edge;
 
             for( var i = 0; i < dims.d1; ++i ) {
                 for( var j = 0; j < dims.d2; ++j ) {
@@ -38,28 +53,20 @@ module Graphs {
                     visited.set(i, j, 1);
 
                     // get connected pixels
-                    var neighbors: Array<any> = adj_tmp.get(i, j);
+                    neighbors = adj_tmp.get(i, j);
 
                     for( var k = 0; k < neighbors.length; ++k ) {
-                        var n = neighbors[k];
+                        nb = neighbors[k];
 
                         // this neighbor already visited? => continue
-                        if( visited.get(n[0], n[1]) ) {
+                        if( visited.get(nb[0], nb[1]) ) {
                             continue;
                         }
-                        var edge: Edge = { p1:      [i, j],
-                                           p2:      [n[0], n[1]],
-                                            w:      n[2]
-                                         };
+                        edge = { p1:      [i, j],
+                                 p2:      [nb[0], nb[1]],
+                                  w:      nb[2]
+                               };
 
-//                        // now we have to delete the opposite edge
-//                        var dest_px_neighbors = adj_tmp.get(n[0], n[1]);
-//                        for( var l = 0; l < dest_px_neighbors.length; ++l ) {
-//                            var potential = dest_px_neighbors[l];
-//                            if( potential[0] == i && potential[1] == j) {
-//                                dest_px_neighbors.splice(l, 1);
-//                            }
-//                        }
                         edges.push(edge);
                     }
                 }

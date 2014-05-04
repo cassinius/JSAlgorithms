@@ -113,7 +113,6 @@ describe("Simple Matrix Tests", function () {
 
         var neighbors0 = m0.getNeighbors(1, 0);
         var neighbors1 = m1.getNeighbors(1, 1);
-        var neighbors2 = m0.getNeighbors(1, 0, true);
 
         expect(neighbors0.length).to.equal(5);
         expect(neighbors0[0][2]).to.equal(0);
@@ -128,17 +127,16 @@ describe("Simple Matrix Tests", function () {
         }
     });
 
-    it("Should correctly determine neighbors (without color diff)", function () {
+    it("Should correctly determine neighbors (color diff)", function () {
         var arr0 = [0, 1, 2, 3, 4, 5];
         var m0 = M2D.generateMatrix(arr0, 3, 2);
-        var m1 = new M2D(7, 15, 4);
         var neighbors2 = m0.getNeighbors(1, 0, true);
 
         expect(neighbors2.length).to.equal(5);
         expect(neighbors2[0][2]).to.equal(1);
-        expect(neighbors2[1][2]).to.equal(-2);
-        expect(neighbors2[2][2]).to.equal(-3);
-        expect(neighbors2[3][2]).to.equal(-1);
-        expect(neighbors2[4][2]).to.equal(-4);
+        expect(neighbors2[1][2]).to.equal(2);
+        expect(neighbors2[2][2]).to.equal(3);
+        expect(neighbors2[3][2]).to.equal(1);
+        expect(neighbors2[4][2]).to.equal(4);
     });
 });

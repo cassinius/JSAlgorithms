@@ -141,6 +141,11 @@ module Matrix {
             var height = this.d2;
 
             var neighborsArray = [];
+            var pixel: any[];
+
+            var graylevel_here,
+                graylevel_there,
+                there;
 
             for (var n = -1; n < 2; n++) {
                 if(x + n < 0 || x + n >= width) {
@@ -154,23 +159,23 @@ module Matrix {
                         continue;
                     }
                     if( color ) {
-                        var pixel:any[] = this.get(x, y);
+                        pixel = this.get(x, y);
 
                         if( typeof pixel === 'number' ) { // already a Gray Image
-                            neighborsArray.push([x + n, y + m, this.get(x, y) - this.get(x + n, y + m)]);
+                            neighborsArray.push([x + n, y + m, Math.abs( this.get(x, y) - this.get(x + n, y + m))] );
                         }
                         else if( Array.isArray(pixel) ) { // RGB conversion !
-                            var graylevel_here =  0.2126*pixel[0] + 0.7152*pixel[1] + 0.0722*pixel[2];
-                            var there = this.get(x + n, y + m);
-                            var graylevel_there = 0.2126*there[0] + 0.7152*there[1] + 0.0722*there[2];
-                            neighborsArray.push([x + n, y + m, graylevel_here - graylevel_there]);
+                            graylevel_here =  0.2126*pixel[0] + 0.7152*pixel[1] + 0.0722*pixel[2];
+                            there = this.get(x + n, y + m);
+                            graylevel_there = 0.2126*there[0] + 0.7152*there[1] + 0.0722*there[2];
+                            neighborsArray.push( [x + n, y + m, Math.abs(graylevel_here - graylevel_there)] );
                         }
                         else {
                             throw "Unsupported Matrix field type!";
                         }
                     }
                     else {
-                        neighborsArray.push([x + n, y + m, this.get(x + n, y + m)]);
+                        neighborsArray.push( [x + n, y + m, this.get(x + n, y + m)] );
                     }
                 }
             }

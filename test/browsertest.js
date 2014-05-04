@@ -20,11 +20,14 @@ var demoGrayScale = function() {
 
 
 var demoAdjacencyList = function() {
+    delete window.grayImg;
+    delete window.adj_list;
+
     var start = new Date().getTime();
 
     getGlobals();
-    var grayImg = new Images.GrayImage(canvas.width, canvas.height, img.data);
-    var adj_list = grayImg.computeAdjacencyList(true);
+    window.grayImg = new Images.GrayImage(canvas.width, canvas.height, img.data);
+    window.adj_list = grayImg.computeAdjacencyList(true);
 
     var dims = adj_list.dim();
     console.log("Adjacency List dimensions: " + dims.d1 + ", " + dims.d2);
@@ -34,18 +37,15 @@ var demoAdjacencyList = function() {
 
 
 var demoEdgeListComputation = function() {
+    delete window.graph;
+    
     var start = new Date().getTime();
 
     getGlobals();
     var grayImg = new Images.GrayImage(canvas.width, canvas.height, img.data);
     var adj_list = grayImg.computeAdjacencyList(true);
-    var graph = new Graphs.Graph(adj_list);
+    window.graph = new Graphs.Graph(adj_list);
 
     var time = new Date().getTime() - start;
-    console.error('Execution time: ' + time + 'ms');
-
-
-    // window.graph = graph;
-
-//    return graph.edge_list;
+    console.log('Execution time: ' + time + 'ms');
 };

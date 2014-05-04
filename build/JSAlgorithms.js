@@ -152,6 +152,9 @@ var Matrix;
             var height = this.d2;
 
             var neighborsArray = [];
+            var pixel;
+
+            var graylevel_here, graylevel_there, there;
 
             for (var n = -1; n < 2; n++) {
                 if (x + n < 0 || x + n >= width) {
@@ -165,15 +168,15 @@ var Matrix;
                         continue;
                     }
                     if (color) {
-                        var pixel = this.get(x, y);
+                        pixel = this.get(x, y);
 
                         if (typeof pixel === 'number') {
-                            neighborsArray.push([x + n, y + m, this.get(x, y) - this.get(x + n, y + m)]);
+                            neighborsArray.push([x + n, y + m, Math.abs(this.get(x, y) - this.get(x + n, y + m))]);
                         } else if (Array.isArray(pixel)) {
-                            var graylevel_here = 0.2126 * pixel[0] + 0.7152 * pixel[1] + 0.0722 * pixel[2];
-                            var there = this.get(x + n, y + m);
-                            var graylevel_there = 0.2126 * there[0] + 0.7152 * there[1] + 0.0722 * there[2];
-                            neighborsArray.push([x + n, y + m, graylevel_here - graylevel_there]);
+                            graylevel_here = 0.2126 * pixel[0] + 0.7152 * pixel[1] + 0.0722 * pixel[2];
+                            there = this.get(x + n, y + m);
+                            graylevel_there = 0.2126 * there[0] + 0.7152 * there[1] + 0.0722 * there[2];
+                            neighborsArray.push([x + n, y + m, Math.abs(graylevel_here - graylevel_there)]);
                         } else {
                             throw "Unsupported Matrix field type!";
                         }
@@ -321,22 +324,41 @@ var Images;
 /// <reference path="./Images.ts" />
 
 var M2D = Matrix.Matrix2D;
-var GrayImg = Images.GrayImage;
-var RgbImg = Images.RgbImage;
 
 var Graphs;
 (function (Graphs) {
     var Graph = (function () {
-        function Graph(adj_list) {
+        function Graph(adj_list, sort, up) {
             this.adj_list = adj_list;
             this.edge_list = this.computeEdgeList();
+            if (sort) {
+                this.sort(up);
+            }
         }
+        Graph.prototype.sort = function (up) {
+            if (typeof up === "undefined") { up = true; }
+            var sortfunc;
+            if (up) {
+                sortfunc = function (a, b) {
+                    return a.w - b.w;
+                };
+            } else {
+                sortfunc = function (a, b) {
+                    return b.w - a.w;
+                };
+            }
+            this.edge_list.sort(sortfunc);
+        };
+
         Graph.prototype.computeEdgeList = function () {
-            var adj_tmp = Matrix.Matrix2D.copyMatrix(this.adj_list);
+            var adj_tmp = this.adj_list;
             var dims = adj_tmp.dim();
             var visited = new Matrix.Matrix2D(dims.d1, dims.d2, 0);
 
             var edges = new Array();
+            var neighbors;
+            var nb;
+            var edge;
 
             for (var i = 0; i < dims.d1; ++i) {
                 for (var j = 0; j < dims.d2; ++j) {
@@ -344,29 +366,21 @@ var Graphs;
                     visited.set(i, j, 1);
 
                     // get connected pixels
-                    var neighbors = adj_tmp.get(i, j);
+                    neighbors = adj_tmp.get(i, j);
 
                     for (var k = 0; k < neighbors.length; ++k) {
-                        var n = neighbors[k];
+                        nb = neighbors[k];
 
                         // this neighbor already visited? => continue
-                        if (visited.get(n[0], n[1])) {
+                        if (visited.get(nb[0], nb[1])) {
                             continue;
                         }
-                        var edge = {
+                        edge = {
                             p1: [i, j],
-                            p2: [n[0], n[1]],
-                            w: n[2]
+                            p2: [nb[0], nb[1]],
+                            w: nb[2]
                         };
 
-                        //                        // now we have to delete the opposite edge
-                        //                        var dest_px_neighbors = adj_tmp.get(n[0], n[1]);
-                        //                        for( var l = 0; l < dest_px_neighbors.length; ++l ) {
-                        //                            var potential = dest_px_neighbors[l];
-                        //                            if( potential[0] == i && potential[1] == j) {
-                        //                                dest_px_neighbors.splice(l, 1);
-                        //                            }
-                        //                        }
                         edges.push(edge);
                     }
                 }
@@ -380,6 +394,69 @@ var Graphs;
 
     setModule('Graphs', Graphs);
 })(Graphs || (Graphs = {}));
+/// <reference path="../tsrefs/node.d.ts" />
+/// <reference path="./Helper.ts" />
+/// <reference path="./Matrix.ts" />
+/// <reference path="./Images.ts" />
+/// <reference path="./Graphs.ts" />
+
+var M2D = Matrix.Matrix2D;
+
+var Regions;
+(function (Regions) {
+    var RegionMap = (function () {
+        function RegionMap(width, height, img) {
+            this.labels = null;
+            this.regions = {};
+            this.labels = new M2D(width, height);
+            var arr = this.labels.getArray();
+            var img_arr = img.getArray();
+
+            for (var i = 0; i < arr.length; ++i) {
+                arr[i] = i;
+                this.regions[i] = new Region(i);
+                this.regions[i].pixels.push(img_arr[i]);
+            }
+        }
+        // we merge r2 into r1
+        RegionMap.prototype.merge = function (r1, r2, e) {
+            // Set new internal maxMST
+            r1.maxMST = e.w;
+
+            // Set new avg color (as integer)
+            r1.avg_color = ((r1.avg_color * r1.size + r2.avg_color * r2.size) / (r1.size + r2.size)) | 0;
+
+            // Set the centroid (TODO implement later ;))
+            // Update size
+            r1.size += r2.size;
+
+            // set all other labels to meeeee !
+            var px;
+            for (var i = 0; i < r2.pixels.length; ++i) {
+                px = r2[i];
+                this.labels.set(px[0], px[1], r1.id);
+            }
+        };
+        return RegionMap;
+    })();
+    Regions.RegionMap = RegionMap;
+
+    var Region = (function () {
+        function Region(id) {
+            this.id = id;
+            // TODO WHY OH WHY IS THE TYPE SYSTEM SO SHY ???
+            this.size = 0;
+            this.avg_color = 0;
+            this.centroid = null;
+            this.maxMST = 0;
+            this.pixels = [];
+        }
+        return Region;
+    })();
+    Regions.Region = Region;
+
+    setModule('Regions', Regions);
+})(Regions || (Regions = {}));
 var getGlobals = function() {
     window.canvas = document.querySelector("#img_canvas");
     window.ctx = canvas.getContext('2d');
@@ -402,11 +479,14 @@ var demoGrayScale = function() {
 
 
 var demoAdjacencyList = function() {
+    delete window.grayImg;
+    delete window.adj_list;
+
     var start = new Date().getTime();
 
     getGlobals();
-    var grayImg = new Images.GrayImage(canvas.width, canvas.height, img.data);
-    var adj_list = grayImg.computeAdjacencyList(true);
+    window.grayImg = new Images.GrayImage(canvas.width, canvas.height, img.data);
+    window.adj_list = grayImg.computeAdjacencyList(true);
 
     var dims = adj_list.dim();
     console.log("Adjacency List dimensions: " + dims.d1 + ", " + dims.d2);
@@ -416,18 +496,15 @@ var demoAdjacencyList = function() {
 
 
 var demoEdgeListComputation = function() {
+    delete window.graph;
+    
     var start = new Date().getTime();
 
     getGlobals();
     var grayImg = new Images.GrayImage(canvas.width, canvas.height, img.data);
     var adj_list = grayImg.computeAdjacencyList(true);
-    var graph = new Graphs.Graph(adj_list);
+    window.graph = new Graphs.Graph(adj_list);
 
     var time = new Date().getTime() - start;
-    console.error('Execution time: ' + time + 'ms');
-
-
-    // window.graph = graph;
-
-//    return graph.edge_list;
+    console.log('Execution time: ' + time + 'ms');
 };
