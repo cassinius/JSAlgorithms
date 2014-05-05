@@ -21,24 +21,31 @@ module Regions {
     }
 
     export class RegionMap {
-        labels: Matrix.Matrix2D = null;
+        labels: Matrix.Matrix2D;
         regions: {} = {};
 
         constructor(width: number, height: number, img: Images.GrayImage) {
             this.labels = new M2D(width, height);
             var arr = this.labels.getArray();
             var img_arr = img.getArray();
+            var x:number,
+                y: number,
+                region: Region;
 
             for (var i = 0; i < arr.length; ++i) {
                 arr[i] = i;
-                this.regions[i] = new Region(i);
+                region = new Region(i);
 
-                // TODO compute the right conversion
-                this.regions[i].pixels.push( [ img_arr[i] ]);
+                // TODO outsource this to region class in some meaningful way
+                region.size = 1;
+                region.avg_color = img_arr[i];
+                x = i % width;
+                y = (i / width) | 0;
+                region.pixels.push( [ x, y, img_arr[i] ]);
+                this.regions[i] = region;
             }
         }
 
-        // we merge r2 into r1
         merge(r1: Region, r2: Region, e: Graphs.Edge) {
             // Set new internal maxMST
             r1.maxMST = e.w;
@@ -51,13 +58,29 @@ module Regions {
             // Update size
             r1.size += r2.size;
 
-            // set all other labels to meeeee !
+            // set all other labels to the r1 label
             var px;
             for(var i = 0; i < r2.pixels.length; ++i) {
-                px = r2[i];
+                px = r2.pixels[i];
                 this.labels.set(px[0], px[1], r1.id);
             }
+
+            // and push all pixels over...
+            // r1.pixels.push.apply(r1.pixels, r2.pixels);
+
+//            while( r2.pixels.length ) {
+//                r1.pixels.push(r2.pixels.pop());
+//            }
+
+            // delete r2
+            // delete this.regions[r2.id];
         }
+
+        getRegion( px: Array<any> ) : Region {
+            var key = this.labels.get(px[0], px[1]);
+            return this.regions[key];
+        }
+
     }
 
 
@@ -70,7 +93,6 @@ module Regions {
         pixels: Array<any> = [];
 
         constructor( public id: number ) {}
-
 
     }
 

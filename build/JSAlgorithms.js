@@ -406,19 +406,25 @@ var Regions;
 (function (Regions) {
     var RegionMap = (function () {
         function RegionMap(width, height, img) {
-            this.labels = null;
             this.regions = {};
             this.labels = new M2D(width, height);
             var arr = this.labels.getArray();
             var img_arr = img.getArray();
+            var x, y, region;
 
             for (var i = 0; i < arr.length; ++i) {
                 arr[i] = i;
-                this.regions[i] = new Region(i);
-                this.regions[i].pixels.push(img_arr[i]);
+                region = new Region(i);
+
+                // TODO outsource this to region class in some meaningful way
+                region.size = 1;
+                region.avg_color = img_arr[i];
+                x = i % width;
+                y = (i / width) | 0;
+                region.pixels.push([x, y, img_arr[i]]);
+                this.regions[i] = region;
             }
         }
-        // we merge r2 into r1
         RegionMap.prototype.merge = function (r1, r2, e) {
             // Set new internal maxMST
             r1.maxMST = e.w;
@@ -430,12 +436,26 @@ var Regions;
             // Update size
             r1.size += r2.size;
 
-            // set all other labels to meeeee !
+            // set all other labels to the r1 label
             var px;
             for (var i = 0; i < r2.pixels.length; ++i) {
-                px = r2[i];
+                px = r2.pixels[i];
                 this.labels.set(px[0], px[1], r1.id);
             }
+
+            // and push all pixels over...
+            r1.pixels.push.apply(r1.pixels, r2.pixels);
+
+            //            while( r2.pixels.length ) {
+            //                r1.pixels.push(r2.pixels.pop());
+            //            }
+            // delete r2
+            delete this.regions[r2.id];
+        };
+
+        RegionMap.prototype.getRegion = function (px) {
+            var key = this.labels.get(px[0], px[1]);
+            return this.regions[key];
         };
         return RegionMap;
     })();
@@ -499,8 +519,8 @@ var demoEdgeListComputation = function() {
     delete window.graph;
     
     var start = new Date().getTime();
-
     getGlobals();
+
     var grayImg = new Images.GrayImage(canvas.width, canvas.height, img.data);
     var adj_list = grayImg.computeAdjacencyList(true);
     window.graph = new Graphs.Graph(adj_list);
@@ -508,3 +528,59 @@ var demoEdgeListComputation = function() {
     var time = new Date().getTime() - start;
     console.log('Execution time: ' + time + 'ms');
 };
+
+
+var demoKruskalBasedSegmentation = function() {
+    delete window.grayImg;
+    delete window.adj_list;
+    delete window.graph;
+    delete window.rMap;
+
+    var start = new Date().getTime();
+    getGlobals();
+    var width = canvas.width,
+        height = canvas.height;
+
+    window.grayImg = new Images.GrayImage(width, height, img.data);
+    var time = new Date().getTime() - start;
+    console.log("Converted to Gray Image... in " + time + 'ms');
+
+    window.adj_list = grayImg.computeAdjacencyList(true);
+    time = new Date().getTime() - start;
+    console.log("Constructed Adjacency List...  in " + time + 'ms');
+
+    window.graph = new Graphs.Graph(adj_list, true); // sort the Edge List
+    time = new Date().getTime() - start;
+    console.log("Instantiated original Graph... in " + time + 'ms');
+
+    window.rMap = new Regions.RegionMap(width, height, grayImg);
+    time = new Date().getTime() - start;
+    console.log("Constructed Region Map... in " + time + 'ms');
+
+    var edges = graph.edge_list,
+        px_i = [],
+        px_j = [],
+        r1 = 0,
+        r2 = 0,
+        e = 0,
+        mergers = 0;
+
+    console.log("STARTING THE REGION MERGING...");
+
+    for( var i = 0; i < edges.length; ++i ) {
+        e = edges[i];
+        px_i = e.p1;
+        px_j = e.p2;
+        r1 = rMap.getRegion(px_i);
+        r2 = rMap.getRegion(px_j);
+        if( r1.id !== r2.id ) {
+            rMap.merge(r1, r2, e);
+            ++mergers;
+        }
+    }
+
+    time = new Date().getTime() - start;
+    console.log("Merged " + mergers + " regions... in " + time + 'ms');
+    console.log( (width * height - mergers) + " regions remain.");
+};
+

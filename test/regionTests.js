@@ -17,8 +17,8 @@ var Graph = Graphs.Graph;
 var Region = Regions.Region;
 var RMap = Regions.RegionMap;
 
-var width = 512;
-var height = 512;
+var width = 25;
+var height = 25;
 var rgba = new Array(width * height * 4);
 for (var i = 0; i < width * height * 4; ++i) {
     if (i % 4 === 3) {

@@ -39,7 +39,7 @@ module.exports = function(grunt) {
                     stdout: true,
                     stderr: true
                 },
-                command: 'cp build/JSAlgorithms.min.js /var/www/html/imgextract/js/'
+                command: 'cp build/JSAlgorithms.js /var/www/html/imgextract/js/'
             }
         },
         concat: {

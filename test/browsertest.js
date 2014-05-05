@@ -40,8 +40,8 @@ var demoEdgeListComputation = function() {
     delete window.graph;
     
     var start = new Date().getTime();
-
     getGlobals();
+
     var grayImg = new Images.GrayImage(canvas.width, canvas.height, img.data);
     var adj_list = grayImg.computeAdjacencyList(true);
     window.graph = new Graphs.Graph(adj_list);
@@ -49,3 +49,59 @@ var demoEdgeListComputation = function() {
     var time = new Date().getTime() - start;
     console.log('Execution time: ' + time + 'ms');
 };
+
+
+var demoKruskalBasedSegmentation = function() {
+    delete window.grayImg;
+    delete window.adj_list;
+    delete window.graph;
+    delete window.rMap;
+
+    var start = new Date().getTime();
+    getGlobals();
+    var width = canvas.width,
+        height = canvas.height;
+
+    window.grayImg = new Images.GrayImage(width, height, img.data);
+    var time = new Date().getTime() - start;
+    console.log("Converted to Gray Image... in " + time + 'ms');
+
+    window.adj_list = grayImg.computeAdjacencyList(true);
+    time = new Date().getTime() - start;
+    console.log("Constructed Adjacency List...  in " + time + 'ms');
+
+    window.graph = new Graphs.Graph(adj_list, true); // sort the Edge List
+    time = new Date().getTime() - start;
+    console.log("Instantiated original Graph... in " + time + 'ms');
+
+    window.rMap = new Regions.RegionMap(width, height, grayImg);
+    time = new Date().getTime() - start;
+    console.log("Constructed Region Map... in " + time + 'ms');
+
+    var edges = graph.edge_list,
+        px_i = [],
+        px_j = [],
+        r1 = 0,
+        r2 = 0,
+        e = 0,
+        mergers = 0;
+
+    console.log("STARTING THE REGION MERGING...");
+
+    for( var i = 0; i < edges.length; ++i ) {
+        e = edges[i];
+        px_i = e.p1;
+        px_j = e.p2;
+        r1 = rMap.getRegion(px_i);
+        r2 = rMap.getRegion(px_j);
+        if( r1.id !== r2.id ) {
+            rMap.merge(r1, r2, e);
+            ++mergers;
+        }
+    }
+
+    time = new Date().getTime() - start;
+    console.log("Merged " + mergers + " regions... in " + time + 'ms');
+    console.log( (width * height - mergers) + " regions remain.");
+};
+

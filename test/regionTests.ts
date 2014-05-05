@@ -18,8 +18,8 @@ var Graph = Graphs.Graph;
 var Region = Regions.Region;
 var RMap = Regions.RegionMap;
 
-var width: number = 512;
-var height: number = 512;
+var width: number = 25;
+var height: number = 25;
 var rgba: Array<number> = new Array(width * height * 4);
 for( var i = 0; i < width * height * 4; ++i ) {
     if( i % 4 === 3 ) {
