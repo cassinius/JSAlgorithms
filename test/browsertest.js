@@ -51,7 +51,7 @@ var demoEdgeListComputation = function() {
 };
 
 
-var demoKruskalBasedSegmentation = function() {
+var demoRegionMerging = function() {
     delete window.grayImg;
     delete window.adj_list;
     delete window.graph;

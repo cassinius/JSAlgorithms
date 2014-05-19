@@ -1,8 +1,6 @@
 /// <reference path="../tsrefs/node.d.ts" />
 /// <reference path="./Helper.ts" />
 /// <reference path="./Matrix.ts" />
-/// <reference path="./Images.ts" />
-/// <reference path="./Graphs.ts" />
 
 var M2D = Matrix.Matrix2D;
 
@@ -30,28 +28,30 @@ var Regions;
             }
         }
         RegionMap.prototype.merge = function (r1, r2, e) {
+            // define which region to merge into the other
+            // var p = r1;
             // Set new internal maxMST
             r1.maxMST = e.w;
 
             // Set new avg color (as integer)
             r1.avg_color = ((r1.avg_color * r1.size + r2.avg_color * r2.size) / (r1.size + r2.size)) | 0;
 
-            // Set the centroid (TODO implement later ;))
-            // Update size
-            r1.size += r2.size;
+            var sum_size = r1.size + r2.size;
 
-            // set all other labels to the r1 label
+            // Set the centroid and update the size (we assume 2D centroids)
+            r1.centroid[0] = (r1.centroid[0] * r1.size + r2.centroid[0] + r2.size) / sum_size;
+            r1.centroid[1] = (r1.centroid[1] * r1.size + r2.centroid[1] + r2.size) / sum_size;
+
+            r1.size = sum_size;
+
+            // join sets
+            // set all labels to the new region label
             var px;
             for (var i = 0; i < r2.pixels.length; ++i) {
                 px = r2.pixels[i];
                 this.labels.set(px[0], px[1], r1.id);
             }
-            // and push all pixels over...
-            // r1.pixels.push.apply(r1.pixels, r2.pixels);
-            //            while( r2.pixels.length ) {
-            //                r1.pixels.push(r2.pixels.pop());
-            //            }
-            // delete r2
+            // delete the merged region
             // delete this.regions[r2.id];
         };
 
