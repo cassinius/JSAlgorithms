@@ -68,6 +68,10 @@ var Matrix;
             return this.arr[pos];
         };
 
+        Matrix2D.prototype.getIndex = function (i, j) {
+            return j * this.d1 + i;
+        };
+
         Matrix2D.prototype.set = function (i, j, val) {
             var pos = j * this.d1 + i;
             if (pos >= this.length()) {

@@ -14,8 +14,10 @@ module Regions {
         size: number
         avg_color: number
         centroid: Array<any>
-        maxMST: number
+        maxEdge: number
         pixels: Array<any>
+        labelColor: Array<any>
+        deleted: boolean
     }
 
     export class RegionMap {
@@ -26,7 +28,7 @@ module Regions {
             this.labels = new M2D(width, height);
             var arr = this.labels.getArray();
             var img_arr = img.getArray();
-            var x:number,
+            var x: number,
                 y: number,
                 region: Region;
 
@@ -37,20 +39,18 @@ module Regions {
                 // TODO outsource this to region class in some meaningful way
                 region.size = 1;
                 region.avg_color = img_arr[i];
-                x = i % width;
-                y = (i / width) | 0;
-                region.pixels.push( [ x, y, img_arr[i] ]);
+                x = i % width >>> 0;
+                y = (i / width) >>> 0;
+//                region.pixels.push( [ x, y, img_arr[i] ]);
+                region.centroid = [x, y];
                 this.regions[i] = region;
             }
         }
 
         merge(r1: Region, r2: Region, e: Graphs.Edge) {
 
-            // define which region to merge into the other
-            // var p = r1;
-
-            // Set new internal maxMST
-            r1.maxMST = e.w;
+            // Set new internal maxEdge
+            r1.maxEdge = e.w;
 
             // Set new avg color (as integer)
             r1.avg_color = ( ( r1.avg_color * r1.size + r2.avg_color * r2.size ) / ( r1.size + r2.size ) ) | 0;
@@ -62,23 +62,17 @@ module Regions {
 
             r1.size = sum_size;
 
-            // join sets
-
-
-            // set all labels to the new region label
-            var px;
-            for(var i = 0; i < r2.pixels.length; ++i) {
-                px = r2.pixels[i];
-                this.labels.set(px[0], px[1], r1.id);
-            }
-
-            // delete the merged region
-            // delete this.regions[r2.id];
+            // mark the region r2 deleted
+            r2.deleted = true;
         }
 
         getRegion( px: Array<any> ) : Region {
             var key = this.labels.get(px[0], px[1]);
             return this.regions[key];
+        }
+
+        getRegionByIndex( idx : number ) {
+            return this.regions[idx];
         }
 
     }
@@ -88,9 +82,11 @@ module Regions {
         // TODO WHY OH WHY IS THE TYPE SYSTEM SO SHY ???
         size: number = 0;
         avg_color: number = 0;
-        centroid: Array<any> = null;
-        maxMST: number = 0;
+        centroid: Array<any> = [];
+        maxEdge: number = 0;
         pixels: Array<any> = [];
+        labelColor: Array<any> = [];
+        deleted: boolean = false;
 
         constructor( public id: number ) {}
 

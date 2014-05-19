@@ -49,7 +49,7 @@ module Graphs {
 
             for( var i = 0; i < dims.d1; ++i ) {
                 for( var j = 0; j < dims.d2; ++j ) {
-                    // mark the pixel visited (=> add no more edges to this one)
+                    // mark the pixel deleted (=> add no more edges to this one)
                     visited.set(i, j, 1);
 
                     // get connected pixels
@@ -58,7 +58,7 @@ module Graphs {
                     for( var k = 0; k < neighbors.length; ++k ) {
                         nb = neighbors[k];
 
-                        // this neighbor already visited? => continue
+                        // this neighbor already deleted? => continue
                         if( visited.get(nb[0], nb[1]) ) {
                             continue;
                         }

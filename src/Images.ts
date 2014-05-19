@@ -81,6 +81,10 @@ module Images {
             return this.matrix.getArray();
         }
 
+        getPixelIndex(i: number, j: number) : number {
+            return this.matrix.getIndex(i, j);
+        }
+
         toRgbaArray() : Array<number> {
             var rgba = new Uint8ClampedArray( this.width * this.height * 4);
             var pixels = this.matrix.getArray();

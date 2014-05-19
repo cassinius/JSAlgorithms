@@ -47,7 +47,7 @@ module.exports = function(grunt) {
                 separator: ''
             },
             dist: {
-                src: ['src/Helper.js', 'src/Matrix.js', 'src/Images.js',                                'src/Graphs.js', 'src/Region.js',
+                src: ['src/Helper.js', 'src/Matrix.js', 'src/DisjointSet.js', 'src/Images.js', 'src/Graphs.js', 'src/Region.js',
                       'test/browsertest.js'],
                 dest: 'build/JSAlgorithms.js'
             }

@@ -89,6 +89,10 @@ var Matrix;
             return this.arr[pos];
         };
 
+        Matrix2D.prototype.getIndex = function (i, j) {
+            return j * this.d1 + i;
+        };
+
         Matrix2D.prototype.set = function (i, j, val) {
             var pos = j * this.d1 + i;
             if (pos >= this.length()) {
@@ -205,6 +209,66 @@ var Matrix;
 
     setModule('Matrix', Matrix);
 })(Matrix || (Matrix = {}));
+/**
+* Created by bernd on 19.05.14.
+*/
+/// <reference path="../tsrefs/node.d.ts" />
+/// <reference path="./Helper.ts" />
+
+var DJSet;
+(function (DJSet) {
+    var DisjointSet = (function () {
+        // we make this a continuous DJSet for the moment, i.e.
+        // our elements are numberd 0 .. size-1
+        function DisjointSet(size) {
+            this.size = size;
+            this.parents = new Array(size);
+            this.ranks = new Array(size);
+            for (var i = 0; i < size; ++i) {
+                // every region is it's own parent at the beginning
+                this.parents[i] = i;
+
+                // every region has rank = 0 (no children)
+                this.ranks[i] = 0;
+            }
+        }
+        DisjointSet.prototype.getSize = function () {
+            return this.size;
+        };
+
+        DisjointSet.prototype.find = function (region) {
+            var p = this.parents[region];
+            if (p === region) {
+                return p;
+            } else {
+                return this.find(p);
+            }
+        };
+
+        DisjointSet.prototype.union = function (r1, r2) {
+            if (this.ranks[r1] > this.ranks[r2]) {
+                this.parents[r2] = r1;
+            } else if (this.ranks[r2] > this.ranks[r1]) {
+                this.parents[r1] = r2;
+            } else {
+                this.parents[r2] = r1;
+                this.ranks[r1]++;
+            }
+        };
+
+        DisjointSet.prototype.rank = function (r) {
+            return this.ranks[r];
+        };
+
+        DisjointSet.prototype.parent = function (r) {
+            return this.parents[r];
+        };
+        return DisjointSet;
+    })();
+    DJSet.DisjointSet = DisjointSet;
+
+    setModule('DJSet', DJSet);
+})(DJSet || (DJSet = {}));
 /// <reference path="../tsrefs/node.d.ts" />
 /// <reference path="./Helper.ts" />
 /// <reference path="./Matrix.ts" />
@@ -277,6 +341,10 @@ var Images;
         }
         GrayImage.prototype.getArray = function () {
             return this.matrix.getArray();
+        };
+
+        GrayImage.prototype.getPixelIndex = function (i, j) {
+            return this.matrix.getIndex(i, j);
         };
 
         GrayImage.prototype.toRgbaArray = function () {
@@ -362,7 +430,7 @@ var Graphs;
 
             for (var i = 0; i < dims.d1; ++i) {
                 for (var j = 0; j < dims.d2; ++j) {
-                    // mark the pixel visited (=> add no more edges to this one)
+                    // mark the pixel deleted (=> add no more edges to this one)
                     visited.set(i, j, 1);
 
                     // get connected pixels
@@ -371,7 +439,7 @@ var Graphs;
                     for (var k = 0; k < neighbors.length; ++k) {
                         nb = neighbors[k];
 
-                        // this neighbor already visited? => continue
+                        // this neighbor already deleted? => continue
                         if (visited.get(nb[0], nb[1])) {
                             continue;
                         }
@@ -397,8 +465,6 @@ var Graphs;
 /// <reference path="../tsrefs/node.d.ts" />
 /// <reference path="./Helper.ts" />
 /// <reference path="./Matrix.ts" />
-/// <reference path="./Images.ts" />
-/// <reference path="./Graphs.ts" />
 
 var M2D = Matrix.Matrix2D;
 
@@ -419,43 +485,40 @@ var Regions;
                 // TODO outsource this to region class in some meaningful way
                 region.size = 1;
                 region.avg_color = img_arr[i];
-                x = i % width;
-                y = (i / width) | 0;
-                region.pixels.push([x, y, img_arr[i]]);
+                x = i % width >>> 0;
+                y = (i / width) >>> 0;
+
+                //                region.pixels.push( [ x, y, img_arr[i] ]);
+                region.centroid = [x, y];
                 this.regions[i] = region;
             }
         }
         RegionMap.prototype.merge = function (r1, r2, e) {
-            // Set new internal maxMST
-            r1.maxMST = e.w;
+            // Set new internal maxEdge
+            r1.maxEdge = e.w;
 
             // Set new avg color (as integer)
             r1.avg_color = ((r1.avg_color * r1.size + r2.avg_color * r2.size) / (r1.size + r2.size)) | 0;
 
-            // Set the centroid (TODO implement later ;))
-            // Update size
-            r1.size += r2.size;
+            var sum_size = r1.size + r2.size;
 
-            // set all other labels to the r1 label
-            var px;
-            for (var i = 0; i < r2.pixels.length; ++i) {
-                px = r2.pixels[i];
-                this.labels.set(px[0], px[1], r1.id);
-            }
+            // Set the centroid and update the size (we assume 2D centroids)
+            r1.centroid[0] = (r1.centroid[0] * r1.size + r2.centroid[0] + r2.size) / sum_size;
+            r1.centroid[1] = (r1.centroid[1] * r1.size + r2.centroid[1] + r2.size) / sum_size;
 
-            // and push all pixels over...
-            r1.pixels.push.apply(r1.pixels, r2.pixels);
+            r1.size = sum_size;
 
-            //            while( r2.pixels.length ) {
-            //                r1.pixels.push(r2.pixels.pop());
-            //            }
-            // delete r2
-            delete this.regions[r2.id];
+            // mark the region r2 deleted
+            r2.deleted = true;
         };
 
         RegionMap.prototype.getRegion = function (px) {
             var key = this.labels.get(px[0], px[1]);
             return this.regions[key];
+        };
+
+        RegionMap.prototype.getRegionByIndex = function (idx) {
+            return this.regions[idx];
         };
         return RegionMap;
     })();
@@ -467,9 +530,11 @@ var Regions;
             // TODO WHY OH WHY IS THE TYPE SYSTEM SO SHY ???
             this.size = 0;
             this.avg_color = 0;
-            this.centroid = null;
-            this.maxMST = 0;
+            this.centroid = [];
+            this.maxEdge = 0;
             this.pixels = [];
+            this.labelColor = [];
+            this.deleted = false;
         }
         return Region;
     })();
@@ -477,6 +542,20 @@ var Regions;
 
     setModule('Regions', Regions);
 })(Regions || (Regions = {}));
+if( typeof window !== 'undefined' && window !== null) {
+    var k_thres = document.querySelector("#k-threshold").value;
+    window.k = k_thres;
+    document.querySelector("#k-threshold-info").textContent = k_thres;
+
+    var size_thres = document.querySelector("#size-threshold").value;
+    window.threshold = size_thres;
+    document.querySelector("#size-threshold-info").textContent = size_thres;
+
+    var region_max_merge_size = document.querySelector("#max-merge").value;
+    window.region_max_merge_size = region_max_merge_size;
+    document.querySelector("#max-merge-info").textContent = region_max_merge_size;
+}
+
 var getGlobals = function() {
     window.canvas = document.querySelector("#img_canvas");
     window.ctx = canvas.getContext('2d');
@@ -530,11 +609,12 @@ var demoEdgeListComputation = function() {
 };
 
 
-var demoKruskalBasedSegmentation = function() {
+var demoRegionMerging = function() {
     delete window.grayImg;
     delete window.adj_list;
     delete window.graph;
     delete window.rMap;
+    delete window.djs;
 
     var start = new Date().getTime();
     getGlobals();
@@ -554,33 +634,105 @@ var demoKruskalBasedSegmentation = function() {
     console.log("Instantiated original Graph... in " + time + 'ms');
 
     window.rMap = new Regions.RegionMap(width, height, grayImg);
+    window.djs = new DJSet.DisjointSet(width * height);
     time = new Date().getTime() - start;
     console.log("Constructed Region Map... in " + time + 'ms');
 
     var edges = graph.edge_list,
-        px_i = [],
-        px_j = [],
-        r1 = 0,
-        r2 = 0,
-        e = 0,
-        mergers = 0;
+        px_i,                       // Pixel i (as index)
+        px_j,                       // Pixel j (as index)
+        r1,                         // Region i (as number)
+        r2,                         // Region j (as number)
+        ro1,                        // Region object 1
+        ro2,                        // Region object 2
+        e,                          // current edge
+        tau1,                       // tau value for r1
+        tau2,                       // tau value for r2
+        mInt,                       // min internal diff r1 - r2
+        mergers = 0;                // amount of merged regions
 
-    console.log("STARTING THE REGION MERGING...");
-
+    console.log("STARTING REGION MERGING...");
     for( var i = 0; i < edges.length; ++i ) {
         e = edges[i];
-        px_i = e.p1;
-        px_j = e.p2;
-        r1 = rMap.getRegion(px_i);
-        r2 = rMap.getRegion(px_j);
-        if( r1.id !== r2.id ) {
-            rMap.merge(r1, r2, e);
+        px_i = grayImg.getPixelIndex(e.p1[0], e.p1[1]);
+        px_j = grayImg.getPixelIndex(e.p2[0], e.p2[1]);
+        r1 = djs.find(px_i);
+        r2 = djs.find(px_j);
+
+        // get regions to compute diff values
+        ro1 = rMap.getRegionByIndex( r1 );
+        ro2 = rMap.getRegionByIndex( r2 );
+
+        if ( r1 === r2 || ro1.size > region_max_merge_size || ro2.size > region_max_merge_size ) {
+            // already merged those regions => edge would introduce cycle...
+            continue;
+        }
+
+        tau1 = k / ro1.size;
+        tau2 = k / ro2.size;
+
+        mInt = Math.min(ro1.maxEdge + tau1, ro2.maxEdge + tau2);
+
+        if( mInt > e.w ) {
+            djs.union(r1, r2); // will automatically merge into the larger region
+
+            // which region to merge into the other? => rank
+            if ( djs.rank(r1) > djs.rank(r2) ) {
+                rMap.merge(ro1, ro2, e);
+            }
+            else {
+                rMap.merge(ro2, ro1, e);
+            }
             ++mergers;
         }
     }
-
     time = new Date().getTime() - start;
     console.log("Merged " + mergers + " regions... in " + time + 'ms');
     console.log( (width * height - mergers) + " regions remain.");
+
+
+
+    var regionCanvas = document.querySelector("#region_canvas");
+    var rctx = regionCanvas.getContext('2d');
+    var rImg = rctx.getImageData(0, 0, canvas.width, canvas.height);
+
+    for (i = 0; i < width * height * 4; i += 4) {
+        var region = rMap.getRegionByIndex( djs.find(i / 4) );
+
+        if ( region.size < threshold ) {
+            continue;
+        }
+
+        if ( region.labelColor.length !== 3) {
+            region.labelColor[0] = ( ( Math.random() * 256 ) | 0 ) - 64 * (i % 4);
+            region.labelColor[1] = ( ( Math.random() * 256 ) | 0 ) - 64 * (i % 4);
+            region.labelColor[2] = ( ( Math.random() * 256 ) | 0 ) - 64 * (i % 4);
+        }
+        rImg.data[i] = region.labelColor[0];
+        rImg.data[i+1] = region.labelColor[1];
+        rImg.data[i+2] = region.labelColor[2];
+        rImg.data[i+3] = 255;
+    }
+
+    rctx.putImageData(rImg, 0, 0);
+
+    var regKeys = Object.keys(rMap.regions);
+    var minSize = Number.POSITIVE_INFINITY,
+        maxSize = Number.NEGATIVE_INFINITY,
+        belowThreshold = 0,
+        r;
+
+    for (i = 0; i < regKeys.length; ++i) {
+        r = rMap.regions[regKeys[i]];
+        minSize = minSize > r.size ? r.size : minSize;
+        maxSize = maxSize < r.size ? r.size : maxSize;
+        if (!r.deleted && r.size < threshold) {
+            ++belowThreshold;
+        }
+    }
+
+    console.log("Regions vary in size from: " + minSize + " to " + maxSize + " pixels");
+    console.log("There are: " + belowThreshold + " regions below the size threshold of " + threshold);
+
 };
 

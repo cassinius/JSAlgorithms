@@ -78,6 +78,10 @@ module Matrix {
             return this.arr[pos];
         }
 
+        getIndex(i: number, j: number) : number {
+            return j * this.d1 + i;
+        }
+
         set(i: number, j: number, val: any) : void {
             var pos = j * this.d1 + i;
             if( pos >= this.length() ) {

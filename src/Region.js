@@ -21,17 +21,17 @@ var Regions;
                 // TODO outsource this to region class in some meaningful way
                 region.size = 1;
                 region.avg_color = img_arr[i];
-                x = i % width;
-                y = (i / width) | 0;
-                region.pixels.push([x, y, img_arr[i]]);
+                x = i % width >>> 0;
+                y = (i / width) >>> 0;
+
+                //                region.pixels.push( [ x, y, img_arr[i] ]);
+                region.centroid = [x, y];
                 this.regions[i] = region;
             }
         }
         RegionMap.prototype.merge = function (r1, r2, e) {
-            // define which region to merge into the other
-            // var p = r1;
-            // Set new internal maxMST
-            r1.maxMST = e.w;
+            // Set new internal maxEdge
+            r1.maxEdge = e.w;
 
             // Set new avg color (as integer)
             r1.avg_color = ((r1.avg_color * r1.size + r2.avg_color * r2.size) / (r1.size + r2.size)) | 0;
@@ -44,20 +44,17 @@ var Regions;
 
             r1.size = sum_size;
 
-            // join sets
-            // set all labels to the new region label
-            var px;
-            for (var i = 0; i < r2.pixels.length; ++i) {
-                px = r2.pixels[i];
-                this.labels.set(px[0], px[1], r1.id);
-            }
-            // delete the merged region
-            // delete this.regions[r2.id];
+            // mark the region r2 deleted
+            r2.deleted = true;
         };
 
         RegionMap.prototype.getRegion = function (px) {
             var key = this.labels.get(px[0], px[1]);
             return this.regions[key];
+        };
+
+        RegionMap.prototype.getRegionByIndex = function (idx) {
+            return this.regions[idx];
         };
         return RegionMap;
     })();
@@ -69,9 +66,11 @@ var Regions;
             // TODO WHY OH WHY IS THE TYPE SYSTEM SO SHY ???
             this.size = 0;
             this.avg_color = 0;
-            this.centroid = null;
-            this.maxMST = 0;
+            this.centroid = [];
+            this.maxEdge = 0;
             this.pixels = [];
+            this.labelColor = [];
+            this.deleted = false;
         }
         return Region;
     })();

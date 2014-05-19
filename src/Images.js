@@ -72,6 +72,10 @@ var Images;
             return this.matrix.getArray();
         };
 
+        GrayImage.prototype.getPixelIndex = function (i, j) {
+            return this.matrix.getIndex(i, j);
+        };
+
         GrayImage.prototype.toRgbaArray = function () {
             var rgba = new Uint8ClampedArray(this.width * this.height * 4);
             var pixels = this.matrix.getArray();
