@@ -558,27 +558,39 @@ if( typeof window !== 'undefined' && window !== null) {
     document.querySelector("#max-merge-info").textContent = region_max_merge_size;
 }
 
+var updateProgress = function(msg) {
+    var time = new Date().getTime() - start;
+    var time_msg = msg + " \t :\t " + time + "ms";
+    console.log(time_msg);
+    document.querySelector("#progress").textContent = time_msg;
+};
+
 var getGlobals = function() {
+    // Image Canvas
     window.canvas = document.querySelector("#img_canvas");
+    window.width = canvas.width;
+    window.height = canvas.height;
     window.ctx = canvas.getContext('2d');
-    window.img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    window.img = ctx.getImageData(0, 0, width, height);
+    // Region Canvas
+    window.regionCanvas = document.querySelector("#region_canvas");
+    window.rctx = regionCanvas.getContext('2d');
+    window.rImg = rctx.getImageData(0, 0, width, height);
+    // Delaunay Canvas
+    window.delcan = document.querySelector("#delaunay_canvas");
+    window.delctx = delcan.getContext('2d');
+    // Data Structures
     window.vertices = [];
     window.vertices_map = {};
     window.triangles = [];
-
-    window.regionCanvas = document.querySelector("#region_canvas");
-    window.rctx = regionCanvas.getContext('2d');
-    window.rImg = rctx.getImageData(0, 0, canvas.width, canvas.height);
-
-    window.delcan = document.querySelector("#delaunay_canvas");
-    window.delctx = delcan.getContext('2d');
-
     window.outGraph = {};
+    // Time
+    window.start = new Date().getTime();
 };
 
 
 var demoGrayScale = function() {
-    var start = new Date().getTime();
+    window.start = new Date().getTime();
 
     getGlobals();
     var gray = new Images.GrayImage(canvas.width, canvas.height, img.data);
@@ -623,34 +635,44 @@ var demoEdgeListComputation = function() {
 };
 
 
-var demoRegionMerging = function() {
+var startRegionMerging = function() {
     delete window.grayImg;
     delete window.adj_list;
     delete window.graph;
     delete window.rMap;
     delete window.djs;
 
-    var start = new Date().getTime();
     getGlobals();
-    var width = canvas.width,
-        height = canvas.height;
 
+    rctx.clearRect(0, 0, width, height);
+    delctx.clearRect(0, 0, width, height);
+    document.querySelector("#region_canvas").style.backgroundImage = "url(/imgextract/images/loading.gif)";
+    document.querySelector("#progress").textContent = "Processing Image... this might take some time...";
+
+    setTimeout(function() {
+        demoRegionMerging()
+    }, 50);
+};
+
+
+var demoRegionMerging = function() {
     window.grayImg = new Images.GrayImage(width, height, img.data);
-    var time = new Date().getTime() - start;
-    console.log("Converted to Gray Image... in " + time + 'ms');
+    var msg = "Converted to Gray Image...";
+    updateProgress(msg);
 
     window.adj_list = grayImg.computeAdjacencyList(true);
-    time = new Date().getTime() - start;
-    console.log("Constructed Adjacency List...  in " + time + 'ms');
+    msg = "Constructed Adjacency List...";
+    updateProgress(msg);
+
 
     window.graph = new Graphs.Graph(adj_list, true); // sort the Edge List
-    time = new Date().getTime() - start;
-    console.log("Instantiated original Graph... in " + time + 'ms');
+    msg = "Instantiated original Graph...";
+    updateProgress(msg);
 
     window.rMap = new Regions.RegionMap(width, height, grayImg);
     window.djs = new DJSet.DisjointSet(width * height);
-    time = new Date().getTime() - start;
-    console.log("Constructed Region Map... in " + time + 'ms');
+    msg = "Constructed Region Map...\n STARTING REGION MERGING...";
+    updateProgress(msg);
 
     var edges = graph.edge_list,
         px_i,                       // Pixel i (as index)
@@ -665,7 +687,6 @@ var demoRegionMerging = function() {
         mInt,                       // min internal diff r1 - r2
         mergers = 0;                // amount of merged regions
 
-    console.log("STARTING REGION MERGING...");
     for( var i = 0; i < edges.length; ++i ) {
         e = edges[i];
         px_i = grayImg.getPixelIndex(e.p1[0], e.p1[1]);
@@ -701,10 +722,8 @@ var demoRegionMerging = function() {
     }
     var nr_regions = width * height - mergers;
 
-    time = new Date().getTime() - start;
-    console.log("Merged " + mergers + " regions... in " + time + 'ms');
-    console.log( nr_regions + " regions remain.");
-
+    msg = "Merged " + mergers + " regions... \n" + nr_regions + " regions remain.";
+    updateProgress(msg);
 
     for (i = 0; i < width * height * 4; i += 4) {
         var region = rMap.getRegionByIndex( djs.find(i / 4) );
@@ -752,8 +771,9 @@ var demoRegionMerging = function() {
         }
     }
 
-    console.log("Regions vary in size from: " + minSize + " to " + maxSize + " pixels");
-    console.log("There are: " + belowThreshold + " regions below the size threshold of " + threshold);
+    msg = "Regions vary in size from: " + minSize + " to " + maxSize + " pixels\n" +
+        "There are: " + belowThreshold + " regions below the size threshold of " + threshold;
+    updateProgress(msg);
 
     // Now for the Delauney
     triangles = Delaunay.triangulate( vertices );
@@ -789,6 +809,13 @@ var demoRegionMerging = function() {
         // we already got that node, just add the next edge
         outGraph[tri].edges.push(triangles[++i]);
     }
+
+
+    // remove Spinner image
+    document.querySelector("#region_canvas").style.backgroundImage = null;
+    document.querySelector("#img_regions .value").textContent = vertices.length;
+    msg = "Graph with " + vertices.length + " vertices written! FINISHED in ";
+    updateProgress(msg);
 
 };
 
