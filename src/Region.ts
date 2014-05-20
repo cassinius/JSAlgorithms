@@ -11,6 +11,7 @@ var M2D = Matrix.Matrix2D;
 module Regions {
 
     export interface IRegion{
+        id: number
         size: number
         avg_color: number
         centroid: Array<any>
@@ -57,8 +58,11 @@ module Regions {
 
             var sum_size = r1.size + r2.size;
             // Set the centroid and update the size (we assume 2D centroids)
-            r1.centroid[0] = ( r1.centroid[0] * r1.size + r2.centroid[0] + r2.size ) / sum_size;
-            r1.centroid[1] = ( r1.centroid[1] * r1.size + r2.centroid[1] + r2.size ) / sum_size;
+            r1.centroid[0] = ( r1.centroid[0] * r1.size + r2.centroid[0] * r2.size ) / sum_size;
+            r1.centroid[1] = ( r1.centroid[1] * r1.size + r2.centroid[1] * r2.size ) / sum_size;
+
+//            r1.centroid[0] = ( r1.centroid[0] + r2.centroid[0] + r2.size ) / 2;
+//            r1.centroid[1] = ( r1.centroid[1] + r2.centroid[1] + r2.size ) / 2;
 
             r1.size = sum_size;
 
