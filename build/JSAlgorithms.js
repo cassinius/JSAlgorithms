@@ -570,6 +570,7 @@ var setGlobals = function() {
     window.delcan = document.querySelector("#delaunay_canvas");
     window.delctx = delcan.getContext('2d');
     // Data Structures
+    window.labelmap = [];
     window.vertices = [];
     window.vertices_map = {};
     window.triangles = [];
@@ -663,6 +664,20 @@ var startGraphExtraction = function(algo) {
         // execute Main Image Segmentation Algorithm
         // TODO: in the future, this will be handeled by a webworker
         algoToExecute();
+        ///////////////////////////////////////////////////////////
+        ///////// POSTPROCESSING AND UI, ALGO INDEPENDENT /////////
+        ///////////////////////////////////////////////////////////
+        // display the Label Map onto a canvas
+        drawLabelMap();
+
+        // we need the Delauney triangulation as precursor to the graph construction
+        computeDelauney();
+
+        // and draw it
+        drawDelauney();
+
+        // now let's construct the graph object and we're finished
+        buildGraphObject();
 
     }, 50);
 };
@@ -827,7 +842,6 @@ var watershed = function() {
         }
       }
    }
-
    while(scan_step3) {
      scan_step3 = 0;
      for( p = 0; p < width*height; ++p) {
@@ -842,28 +856,35 @@ var watershed = function() {
            scan_step3 = 1;
          }
        }
-     }
-     
-   }
-   
-   window.colors = [];
-   for (i = 0; i <= numb_regions; ++i) {
-    var rgb = [];
-    rgb[0] = ( ( Math.random() * 256 ) | 0 );
-    rgb[1] = ( ( Math.random() * 256 ) | 0 );
-    rgb[2] = ( ( Math.random() * 256 ) | 0 );
-    colors[i] = rgb;
+     }     
    }
 
-   var j = -1;
-   for (i = 0; i < l.length; ++i) {
-    rImg.data[++j] = colors[l[i]][0];
-    rImg.data[++j] = colors[l[i]][1];
-    rImg.data[++j] = colors[l[i]][2];
-    rImg.data[++j] = 255;
+   window.rMap = new Regions.RegionMap(width, height, grayImg);
+   console.log("computing rMap");
+
+   window.labelmap = l;
+   var r, orig_region, x, y;
+   var img_arr = grayImg.getArray();
+
+   for ( var i = 0; i < labelmap.length; ++i ) {
+        if ( labelmap[i] !== i ) { // original region merged into another
+            r = rMap.getRegionByIndex( labelmap[i] );           
+            // Set new avg color (as integer)
+            r.avg_color = ( ( r.avg_color * r.size + img_arr[i] ) / ( r.size + 1 ) ) | 0;            
+            // Set new centroid
+            x = i % width >>> 0;
+            y = (i / width) >>> 0;
+            r.centroid[0] = ( r.centroid[0] * r.size + x ) / ( r.size + 1 );
+            r.centroid[1] = ( r.centroid[1] * r.size + y ) / ( r.size + 1 );
+            r.size++;
+
+            // set original region to deleted
+            // rMap.getRegionByIndex( i ).deleted = true;
+        }
    }
 
-   rctx.putImageData(rImg, 0, 0);
+    // set the right size threshold parameter
+    window.size_threshold = window.ws_size_threshold;
 };
 
 
@@ -872,7 +893,6 @@ var watershed = function() {
 //////////// KRUSKAL REGION MERGING ALGORITHM /////////////
 ///////////////////////////////////////////////////////////
 var kruskalRegionMerging = function() {
-
     // prepare the necessary datastructures
     // TODO: in the future this will be algorithm independent!!!
     prepareDataStructures();
@@ -928,22 +948,13 @@ var kruskalRegionMerging = function() {
     msg = "Merged " + mergers + " regions... \n" + nr_regions + " regions remain.";
     updateProgress(msg);
 
+    // set the right size threshold parameter
+    window.size_threshold = window.rm_size_threshold;
 
-    // TODO: MAKE ALGORITHM INDEPENDENT!
-    ///////////////////////////////////////////////////////////
-    ///////// POSTPROCESSING AND UI, ALGO INDEPENDENT /////////
-    ///////////////////////////////////////////////////////////
-    // display the Label Map onto a canvas
-    drawLabelMap();
-
-    // we need the Delauney triangulation as precursor to the graph construction
-    computeDelauney();
-
-    // and draw it
-    drawDelauney();
-
-    // now let's construct the graph object and we're finished
-    buildGraphObject();
+    // compute label array from disjoint set forest
+    for( var i = 0; i < djs.size; ++i ) {
+        window.labelmap[i] = djs.find(i);
+    }
 };
 
 
@@ -951,14 +962,14 @@ var kruskalRegionMerging = function() {
 ///////////////// DRAWING THE LABEL MAP ///////////////////
 ///////////////////////////////////////////////////////////
 var drawLabelMap = function() {
-    for (i = 0; i < width * height * 4; i += 4) {
-        var region = rMap.getRegionByIndex( djs.find(i / 4) );
+    for (i = 0; i < width * height * 4; ) {
+        var region = rMap.getRegionByIndex( labelmap[i / 4] );
 
         if ( region.size < window.size_threshold ) {
-            rImg.data[i] = 255;
-            rImg.data[i+1] = 255;
-            rImg.data[i+2] = 255;
-            rImg.data[i+3] = 255;
+            rImg.data[i++] = 255;
+            rImg.data[i++] = 255;
+            rImg.data[i++] = 255;
+            rImg.data[i++] = 255;
             continue;
         }
 
@@ -967,10 +978,10 @@ var drawLabelMap = function() {
             region.labelColor[1] = ( ( Math.random() * 256 ) | 0 );
             region.labelColor[2] = ( ( Math.random() * 256 ) | 0 );
         }
-        rImg.data[i] = region.labelColor[0];
-        rImg.data[i+1] = region.labelColor[1];
-        rImg.data[i+2] = region.labelColor[2];
-        rImg.data[i+3] = 255;
+        rImg.data[i++] = region.labelColor[0];
+        rImg.data[i++] = region.labelColor[1];
+        rImg.data[i++] = region.labelColor[2];
+        rImg.data[i++] = 255;
     }
 
     // remove Spinner image
@@ -998,11 +1009,11 @@ var computeDelauney = function() {
         r = rMap.regions[regKeys[i]];
         minSize = minSize > r.size ? r.size : minSize;
         maxSize = maxSize < r.size ? r.size : maxSize;
-        if (!r.deleted && r.size < window.size_threshold) {
+        if (!r.deleted && r.size < size_threshold) {
             ++belowThreshold;
         }
-        else if (!r.deleted && r.size >= window.size_threshold) {
-            coords = [r.centroid[0] | 0, r.centroid[1] | 0];
+        else if (!r.deleted && r.size >= size_threshold) {
+            coords = [ r.centroid[0], r.centroid[1] ];
             vertices[vert_idx] = coords;
             vertices_map[vert_idx++] = r;
         }

@@ -10,7 +10,7 @@ var M2D = Matrix.Matrix2D;
 
 module Regions {
 
-    export interface IRegion{
+    export interface IRegion {
         id: number
         size: number
         avg_color: number
@@ -21,6 +21,10 @@ module Regions {
         deleted: boolean
     }
 
+    /*
+    *   @member labels
+    *
+    */
     export class RegionMap {
         labels: Matrix.Matrix2D;
         regions: {} = {};
@@ -37,7 +41,7 @@ module Regions {
                 arr[i] = i;
                 region = new Region(i);
 
-                // TODO outsource this to region class in some meaningful way
+                // TODO outsource this to region class
                 region.size = 1;
                 region.avg_color = img_arr[i];
                 x = i % width >>> 0;
@@ -79,7 +83,7 @@ module Regions {
 
 
     export class Region implements IRegion {
-        // TODO WHY OH WHY IS THE TYPE SYSTEM SO SHY ???
+        // TODO: WHY OH WHY IS THE TYPE SYSTEM SO SHY ???
         size: number = 0;
         avg_color: number = 0;
         centroid: Array<any> = [];
@@ -89,7 +93,6 @@ module Regions {
         deleted: boolean = false;
 
         constructor( public id: number ) {}
-
     }
 
 
