@@ -541,26 +541,6 @@ var Regions;
 
     setModule('Regions', Regions);
 })(Regions || (Regions = {}));
-
-///////////////////////////////////////////////////////////
-/////////////// PARAMETERS FOR KRUSKAL RM /////////////////
-///////////////////////////////////////////////////////////
-// TODO: get into the main website code
-if( typeof window !== 'undefined' && window !== null) {
-    var k_thres = document.querySelector("#k-threshold").value;
-    window.k = k_thres;
-    document.querySelector("#k-threshold-info").textContent = k_thres;
-
-    var size_thres = document.querySelector("#size-threshold").value;
-    window.threshold = size_thres;
-    document.querySelector("#size-threshold-info").textContent = size_thres;
-
-    var region_max_merge_size = document.querySelector("#max-merge").value;
-    window.region_max_merge_size = region_max_merge_size;
-    document.querySelector("#max-merge-info").textContent = region_max_merge_size;
-}
-
-
 ///////////////////////////////////////////////////////////
 /////////////// WRITE MESSAGE TO INFO BOX /////////////////
 ///////////////////////////////////////////////////////////
@@ -680,29 +660,10 @@ var startGraphExtraction = function(algo) {
                             break; 
     }
     setTimeout(function() {
-
-        // prepare the necessary datastructures
-        // TODO: in the future this will be algorithm independent!!!
-        prepareDataStructures();
-
         // execute Main Image Segmentation Algorithm
         // TODO: in the future, this will be handeled by a webworker
         algoToExecute();
 
-        ///////////////////////////////////////////////////////////
-        ///////// POSTPROCESSING AND UI, ALGO INDEPENDENT /////////
-        ///////////////////////////////////////////////////////////
-        // display the Label Map onto a canvas
-        drawLabelMap();
-
-        // we need the Delauney triangulation as precursor to the graph construction
-        computeDelauney();
-
-        // and draw it
-        drawDelauney();
-
-        // now let's construct the graph object and we're finished
-        buildGraphObject();
     }, 50);
 };
 
@@ -735,9 +696,188 @@ var prepareDataStructures = function() {
 
 
 ///////////////////////////////////////////////////////////
+//////////////// WATERSHED TRANSFORMATION /////////////////
+///////////////////////////////////////////////////////////
+var watershed = function() {
+    var step1 = function(p) {
+      if (v[p] != 1)  {
+        var nbs = al[p];
+        for (var i = 0; i < nbs.length; ++i) {
+          if (nbs[i][2] < f[p]) {
+            v[p] = 1;
+          }
+        }
+      }
+    };
+
+    var step2 = function(p) {
+      var changed = 0;
+      if (v[p] != 1)  {
+        var min = vmax;
+        var nbs = al[p];
+        
+        for (var i = 0; i < nbs.length; ++i) {
+          var n_i = grayImg.getPixelIndex(nbs[i][0], nbs[i][1]);
+          if (f[n_i] == f[p] && v[n_i] > 0 && v[n_i] < min) {
+            min = v[n_i];
+          }
+        }
+        
+        if ( min != vmax && v[p] != min+1) {
+          v[p] = min+1;
+          changed = 1;
+        }
+      }
+      return changed;
+    };
+
+    var step3 = function(p) {
+      var lmin = lmax,
+          fmin = f[p],
+          nbs = al[p],
+          changed = 0,
+          n_i = 0,
+          i = 0;
+          
+      if (v[p] == 0) {
+        for (i = 0; i < nbs.length; ++i) {
+          n_i = grayImg.getPixelIndex(nbs[i][0], nbs[i][1]);
+          if (f[n_i] == f[p] && l[n_i] > 0 && l[n_i] < lmin) {
+            lmin = l[n_i];
+          }
+        }
+        if (lmin == lmax && l[p] == 0) {
+          lmin = ++new_label;
+          numb_regions++;
+        }    
+      }
+      else if (v[p] == 1) {
+        for (i = 0; i < nbs.length; ++i) {
+          n_i = grayImg.getPixelIndex(nbs[i][0], nbs[i][1]);
+          if (f[n_i] < fmin) {
+            fmin = f[n_i];
+          }
+        }
+        for (var i = 0; i < nbs.length; ++i) {
+          n_i = grayImg.getPixelIndex(nbs[i][0], nbs[i][1]);
+          if (f[n_i] == fmin && l[n_i] > 0 && l[n_i] < lmin) {
+            lmin = l[n_i];
+          }
+        }
+      }
+      else {
+        for (i = 0; i < nbs.length; ++i) {
+          n_i = grayImg.getPixelIndex(nbs[i][0], nbs[i][1]);
+          if (f[n_i] == f[p] && v[n_i] == v[p]-1 && l[n_i] > 0 && l[n_i] < lmin) {
+            lmin = l[n_i];
+          }
+        }
+      }
+      if (lmin != lmax && lmin != l[p]) { 
+        l[p] = lmin;
+        changed = 1;
+      }
+      return changed;
+    };
+
+
+    window.grayImg = new Images.GrayImage(width, height, img.data);
+    var msg = "Converted to Gray Image...";
+    updateProgress(msg);
+    
+    window.adj_list = grayImg.computeAdjacencyList();
+    msg = "Constructed Adjacency List...";
+    updateProgress(msg);
+
+    window.f = grayImg.getArray();
+    window.v = [];
+    window.l = [];
+    window.al = adj_list.getArray();
+    window.vmax = width + height;
+    window.lmax = window.l_thres;
+    window.new_label = 0;
+    window.numb_regions = 0;
+       
+    var i = width*height,
+        scan_step2 = 1,
+        scan_step3 = 1,
+        p;                 
+        
+    while(i) {
+      v[--i] = 0;
+      l[i] = 0;
+    }
+    
+    for( p = 0; p < width*height; ++p) {
+        step1(p);
+    }
+    while(scan_step2) {
+      scan_step2 = 0;
+      for( p = 0; p < width*height; ++p) {
+        if(step2(p)) {
+          scan_step2 = 1;
+        }
+      }
+      if(scan_step2) {
+        scan_step2 = 0;
+        for( p = width*height; p;) {
+          if(step2(--p)) {
+          scan_step2 = 1;
+          }
+        }
+      }
+   }
+
+   while(scan_step3) {
+     scan_step3 = 0;
+     for( p = 0; p < width*height; ++p) {
+       if(step3(p) == 1) {
+         scan_step3 = 1;
+       }
+     }
+     if(scan_step3) {
+       scan_step3 = 0;
+       for( p = width*height; p;) {   
+         if(step3(--p) == 1) {
+           scan_step3 = 1;
+         }
+       }
+     }
+     
+   }
+   
+   window.colors = [];
+   for (i = 0; i <= numb_regions; ++i) {
+    var rgb = [];
+    rgb[0] = ( ( Math.random() * 256 ) | 0 );
+    rgb[1] = ( ( Math.random() * 256 ) | 0 );
+    rgb[2] = ( ( Math.random() * 256 ) | 0 );
+    colors[i] = rgb;
+   }
+
+   var j = -1;
+   for (i = 0; i < l.length; ++i) {
+    rImg.data[++j] = colors[l[i]][0];
+    rImg.data[++j] = colors[l[i]][1];
+    rImg.data[++j] = colors[l[i]][2];
+    rImg.data[++j] = 255;
+   }
+
+   rctx.putImageData(rImg, 0, 0);
+};
+
+
+
+///////////////////////////////////////////////////////////
 //////////// KRUSKAL REGION MERGING ALGORITHM /////////////
 ///////////////////////////////////////////////////////////
 var kruskalRegionMerging = function() {
+
+    // prepare the necessary datastructures
+    // TODO: in the future this will be algorithm independent!!!
+    prepareDataStructures();
+
+
     var edges = graph.edge_list,
         px_i,                       // Pixel i (as index)
         px_j,                       // Pixel j (as index)
@@ -787,6 +927,23 @@ var kruskalRegionMerging = function() {
     var nr_regions = width * height - mergers;
     msg = "Merged " + mergers + " regions... \n" + nr_regions + " regions remain.";
     updateProgress(msg);
+
+
+    // TODO: MAKE ALGORITHM INDEPENDENT!
+    ///////////////////////////////////////////////////////////
+    ///////// POSTPROCESSING AND UI, ALGO INDEPENDENT /////////
+    ///////////////////////////////////////////////////////////
+    // display the Label Map onto a canvas
+    drawLabelMap();
+
+    // we need the Delauney triangulation as precursor to the graph construction
+    computeDelauney();
+
+    // and draw it
+    drawDelauney();
+
+    // now let's construct the graph object and we're finished
+    buildGraphObject();
 };
 
 
@@ -797,7 +954,7 @@ var drawLabelMap = function() {
     for (i = 0; i < width * height * 4; i += 4) {
         var region = rMap.getRegionByIndex( djs.find(i / 4) );
 
-        if ( region.size < threshold ) {
+        if ( region.size < window.size_threshold ) {
             rImg.data[i] = 255;
             rImg.data[i+1] = 255;
             rImg.data[i+2] = 255;
@@ -841,10 +998,10 @@ var computeDelauney = function() {
         r = rMap.regions[regKeys[i]];
         minSize = minSize > r.size ? r.size : minSize;
         maxSize = maxSize < r.size ? r.size : maxSize;
-        if (!r.deleted && r.size < threshold) {
+        if (!r.deleted && r.size < window.size_threshold) {
             ++belowThreshold;
         }
-        else if (!r.deleted && r.size >= threshold) {
+        else if (!r.deleted && r.size >= window.size_threshold) {
             coords = [r.centroid[0] | 0, r.centroid[1] | 0];
             vertices[vert_idx] = coords;
             vertices_map[vert_idx++] = r;
@@ -852,7 +1009,7 @@ var computeDelauney = function() {
     }
 
     msg = "Regions vary in size from: " + minSize + " to " + maxSize + " pixels\n" +
-        "There are: " + belowThreshold + " regions below the size threshold of " + threshold;
+        "There are: " + belowThreshold + " regions below the size threshold of " + window.size_threshold;
     updateProgress(msg);
 
 
