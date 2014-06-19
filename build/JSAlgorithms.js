@@ -505,9 +505,6 @@ var Regions;
             // Set the centroid and update the size (we assume 2D centroids)
             r1.centroid[0] = (r1.centroid[0] * r1.size + r2.centroid[0] * r2.size) / sum_size;
             r1.centroid[1] = (r1.centroid[1] * r1.size + r2.centroid[1] * r2.size) / sum_size;
-
-            //            r1.centroid[0] = ( r1.centroid[0] + r2.centroid[0] + r2.size ) / 2;
-            //            r1.centroid[1] = ( r1.centroid[1] + r2.centroid[1] + r2.size ) / 2;
             r1.size = sum_size;
 
             // mark the region r2 deleted
@@ -544,6 +541,11 @@ var Regions;
 
     setModule('Regions', Regions);
 })(Regions || (Regions = {}));
+
+///////////////////////////////////////////////////////////
+/////////////// PARAMETERS FOR KRUSKAL RM /////////////////
+///////////////////////////////////////////////////////////
+// TODO: get into the main website code
 if( typeof window !== 'undefined' && window !== null) {
     var k_thres = document.querySelector("#k-threshold").value;
     window.k = k_thres;
@@ -558,6 +560,10 @@ if( typeof window !== 'undefined' && window !== null) {
     document.querySelector("#max-merge-info").textContent = region_max_merge_size;
 }
 
+
+///////////////////////////////////////////////////////////
+/////////////// WRITE MESSAGE TO INFO BOX /////////////////
+///////////////////////////////////////////////////////////
 var updateProgress = function(msg) {
     var time = new Date().getTime() - start;
     var time_msg = msg + " \t :\t " + time + "ms";
@@ -565,7 +571,11 @@ var updateProgress = function(msg) {
     document.querySelector("#progress").textContent = time_msg;
 };
 
-var getGlobals = function() {
+
+///////////////////////////////////////////////////////////
+////////////////// SET GLOBAL VARIABLES ///////////////////
+///////////////////////////////////////////////////////////
+var setGlobals = function() {
     // Image Canvas
     window.canvas = document.querySelector("#img_canvas");
     window.width = canvas.width;
@@ -589,10 +599,13 @@ var getGlobals = function() {
 };
 
 
+///////////////////////////////////////////////////////////
+/////////////// IMAGE GRAYSCALE CONVERSION ////////////////
+///////////////////////////////////////////////////////////
 var demoGrayScale = function() {
     window.start = new Date().getTime();
 
-    getGlobals();
+    setGlobals();
     var gray = new Images.GrayImage(canvas.width, canvas.height, img.data);
     var gray_array = gray.fillRgbaArray(img.data);
 
@@ -603,13 +616,16 @@ var demoGrayScale = function() {
 };
 
 
-var demoAdjacencyList = function() {
+///////////////////////////////////////////////////////////
+/////////////// ADJACENCY LIST COMPUTATION ////////////////
+///////////////////////////////////////////////////////////
+var computeAdjacencyList = function() {
     delete window.grayImg;
     delete window.adj_list;
 
     var start = new Date().getTime();
 
-    getGlobals();
+    setGlobals();
     window.grayImg = new Images.GrayImage(canvas.width, canvas.height, img.data);
     window.adj_list = grayImg.computeAdjacencyList(true);
 
@@ -620,11 +636,14 @@ var demoAdjacencyList = function() {
 };
 
 
-var demoEdgeListComputation = function() {
+///////////////////////////////////////////////////////////
+////////////////// EDGE LIST COMPUTATION //////////////////
+///////////////////////////////////////////////////////////
+var computeEdgeList = function() {
     delete window.graph;
     
     var start = new Date().getTime();
-    getGlobals();
+    setGlobals();
 
     var grayImg = new Images.GrayImage(canvas.width, canvas.height, img.data);
     var adj_list = grayImg.computeAdjacencyList(true);
@@ -635,27 +654,66 @@ var demoEdgeListComputation = function() {
 };
 
 
-var startRegionMerging = function() {
+///////////////////////////////////////////////////////////
+//////////// HOUSEKEEPING AND UI PREPARATION //////////////
+///////////////////////////////////////////////////////////
+var startGraphExtraction = function(algo) {
     delete window.grayImg;
     delete window.adj_list;
     delete window.graph;
     delete window.rMap;
     delete window.djs;
 
-    getGlobals();
+    setGlobals();
 
     rctx.clearRect(0, 0, width, height);
     delctx.clearRect(0, 0, width, height);
     document.querySelector("#region_canvas").style.backgroundImage = "url(/imgextract/images/loading.gif)";
     document.querySelector("#progress").textContent = "Processing Image... this might take some time...";
 
+    // now figure out which algorithm to invoke... and go!
+    var algoToExecute;
+    switch (algo) {
+        case "kruskalrm":   algoToExecute = kruskalRegionMerging;
+                            break;
+        case "watershed":   algoToExecute = watershed;
+                            break; 
+    }
     setTimeout(function() {
-        demoRegionMerging()
+
+        // prepare the necessary datastructures
+        // TODO: in the future this will be algorithm independent!!!
+        prepareDataStructures();
+
+        // execute Main Image Segmentation Algorithm
+        // TODO: in the future, this will be handeled by a webworker
+        algoToExecute();
+
+        ///////////////////////////////////////////////////////////
+        ///////// POSTPROCESSING AND UI, ALGO INDEPENDENT /////////
+        ///////////////////////////////////////////////////////////
+        // display the Label Map onto a canvas
+        drawLabelMap();
+
+        // we need the Delauney triangulation as precursor to the graph construction
+        computeDelauney();
+
+        // and draw it
+        drawDelauney();
+
+        // now let's construct the graph object and we're finished
+        buildGraphObject();
     }, 50);
 };
 
 
-var demoRegionMerging = function() {
+///////////////////////////////////////////////////////////
+/////////////// DATASTRUCTURE PREPROCESSING ///////////////
+///////////////////////////////////////////////////////////
+
+// TODO: this function should be passed a configuration object
+// so it can determine on its own which datastructures to compute
+var prepareDataStructures = function() {
     window.grayImg = new Images.GrayImage(width, height, img.data);
     var msg = "Converted to Gray Image...";
     updateProgress(msg);
@@ -673,7 +731,13 @@ var demoRegionMerging = function() {
     window.djs = new DJSet.DisjointSet(width * height);
     msg = "Constructed Region Map...\n STARTING REGION MERGING...";
     updateProgress(msg);
+};
 
+
+///////////////////////////////////////////////////////////
+//////////// KRUSKAL REGION MERGING ALGORITHM /////////////
+///////////////////////////////////////////////////////////
+var kruskalRegionMerging = function() {
     var edges = graph.edge_list,
         px_i,                       // Pixel i (as index)
         px_j,                       // Pixel j (as index)
@@ -721,10 +785,15 @@ var demoRegionMerging = function() {
         }
     }
     var nr_regions = width * height - mergers;
-
     msg = "Merged " + mergers + " regions... \n" + nr_regions + " regions remain.";
     updateProgress(msg);
+};
 
+
+///////////////////////////////////////////////////////////
+///////////////// DRAWING THE LABEL MAP ///////////////////
+///////////////////////////////////////////////////////////
+var drawLabelMap = function() {
     for (i = 0; i < width * height * 4; i += 4) {
         var region = rMap.getRegionByIndex( djs.find(i / 4) );
 
@@ -747,8 +816,19 @@ var demoRegionMerging = function() {
         rImg.data[i+3] = 255;
     }
 
+    // remove Spinner image
+    document.querySelector("#region_canvas").style.backgroundImage = null;
     rctx.putImageData(rImg, 0, 0);
+};
 
+
+///////////////////////////////////////////////////////////
+///////////////// DELAUNEY TRIANGULATION //////////////////
+///////////////////////////////////////////////////////////
+var computeDelauney = function() {
+    ///////////////////////////////////////////////////////////
+    /////// PREPARE VERTICES DATASTRUCTURE FOR DELAUNEY ///////
+    ///////////////////////////////////////////////////////////
     var regKeys = Object.keys(rMap.regions);
     var minSize = Number.POSITIVE_INFINITY,
         maxSize = Number.NEGATIVE_INFINITY,
@@ -775,10 +855,19 @@ var demoRegionMerging = function() {
         "There are: " + belowThreshold + " regions below the size threshold of " + threshold;
     updateProgress(msg);
 
-    // Now for the Delauney
-    triangles = Delaunay.triangulate( vertices );
-    delctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    ///////////////////////////////////////////////////////////
+    /////////////////// EXECUTE DELAUNEY //////////////////////
+    ///////////////////////////////////////////////////////////
+    triangles = Delaunay.triangulate( vertices );
+};
+
+
+///////////////////////////////////////////////////////////
+////////////////// DRAW DELAUNEY TO UI ////////////////////
+///////////////////////////////////////////////////////////
+var drawDelauney = function() {
+    delctx.clearRect(0, 0, canvas.width, canvas.height);
     for(i = triangles.length; i; ) {
         delctx.beginPath();
         --i; delctx.moveTo(vertices[triangles[i]][0], vertices[triangles[i]][1]);
@@ -787,7 +876,13 @@ var demoRegionMerging = function() {
         delctx.closePath();
         delctx.stroke();
     }
+};
 
+
+///////////////////////////////////////////////////////////
+/////////////// BUILDING THE GRAPH OBJECT /////////////////
+///////////////////////////////////////////////////////////
+var buildGraphObject = function() {
     var region;
     var tri;
     for( i = 0; i < triangles.length - 1; ) {
@@ -810,12 +905,7 @@ var demoRegionMerging = function() {
         outGraph[tri].edges.push(triangles[++i]);
     }
 
-
-    // remove Spinner image
-    document.querySelector("#region_canvas").style.backgroundImage = null;
     document.querySelector("#img_regions .value").textContent = vertices.length;
-    msg = "Graph with " + vertices.length + " vertices written! FINISHED in ";
+    msg = "Graph with " + vertices.length + " vertices constructed! FINISHED in ";
     updateProgress(msg);
-
 };
-
