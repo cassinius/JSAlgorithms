@@ -431,7 +431,7 @@ var drawLabelMap = function() {
         }
 
         if ( region.labelColor.length !== 3) {
-            region.labelColor[0] = ( ( Math.random() * 256 ) | 0 ); //  - 64 * (i % 4)
+            region.labelColor[0] = ( ( Math.random() * 256 ) | 0 );
             region.labelColor[1] = ( ( Math.random() * 256 ) | 0 );
             region.labelColor[2] = ( ( Math.random() * 256 ) | 0 );
         }

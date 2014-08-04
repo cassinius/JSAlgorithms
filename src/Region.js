@@ -6,6 +6,10 @@ var M2D = Matrix.Matrix2D;
 
 var Regions;
 (function (Regions) {
+    /*
+    *   @member labels
+    *
+    */
     var RegionMap = (function () {
         function RegionMap(width, height, img) {
             this.regions = {};
@@ -18,7 +22,7 @@ var Regions;
                 arr[i] = i;
                 region = new Region(i);
 
-                // TODO outsource this to region class in some meaningful way
+                // TODO outsource this to region class
                 region.size = 1;
                 region.avg_color = img_arr[i];
                 x = i % width >>> 0;
@@ -62,7 +66,7 @@ var Regions;
     var Region = (function () {
         function Region(id) {
             this.id = id;
-            // TODO WHY OH WHY IS THE TYPE SYSTEM SO SHY ???
+            // TODO: WHY OH WHY IS THE TYPE SYSTEM SO SHY ???
             this.size = 0;
             this.avg_color = 0;
             this.centroid = [];

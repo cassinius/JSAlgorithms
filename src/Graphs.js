@@ -35,7 +35,7 @@ var Graphs;
             var dims = adj_tmp.dim();
             var visited = new Matrix.Matrix2D(dims.d1, dims.d2, 0);
 
-            var edges = new Array();
+            var edges = [];
             var neighbors;
             var nb;
             var edge;

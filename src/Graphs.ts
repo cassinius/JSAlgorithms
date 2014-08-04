@@ -42,7 +42,7 @@ module Graphs {
             var dims = adj_tmp.dim();
             var visited: Matrix.Matrix2D = new Matrix.Matrix2D(dims.d1, dims.d2, 0);
 
-            var edges: Edge[] = new Array();
+            var edges: Edge[] = [];
             var neighbors: Array<any>;
             var nb: Array<number>;
             var edge: Edge;
