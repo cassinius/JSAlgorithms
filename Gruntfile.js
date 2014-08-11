@@ -5,8 +5,8 @@ module.exports = function(grunt) {
         pkg: grunt.file.readJSON('package.json'),
         uglify: {
             build: {
-                src: 'build/JSAlgorithms.js',
-                dest: 'build/JSAlgorithms.min.js'
+                src: 'dist/JSAlgorithms.js',
+                dest: 'dist/JSAlgorithms.min.js'
             }
         },
         watch: {
@@ -39,7 +39,7 @@ module.exports = function(grunt) {
                     stdout: true,
                     stderr: true
                 },
-                command: 'cp build/JSAlgorithms.js /srv/http/imgextract/js/'
+                command: 'cp dist/JSAlgorithms.js /srv/http/imgextract/js/'
             }
         },
         concat: {
@@ -49,7 +49,7 @@ module.exports = function(grunt) {
             dist: {
                 src: ['src/Helper.js', 'src/Matrix.js', 'src/DisjointSet.js', 'src/Images.js', 'src/Graphs.js', 'src/Region.js',
                       'test/browsertest.js'],
-                dest: 'build/JSAlgorithms.js'
+                dest: 'dist/JSAlgorithms.js'
             }
         }
     });

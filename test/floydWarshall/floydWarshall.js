@@ -21,9 +21,11 @@ var Matrix2D = function (d1, d2, fill) {
     }
 };
 
+
 Matrix2D.prototype.length = function () {
     return this.arr_length;
 };
+
 
 Matrix2D.prototype.get = function (i, j) {
     var pos = j * this.d1 + i;
@@ -32,6 +34,7 @@ Matrix2D.prototype.get = function (i, j) {
     }
     return this.arr[pos];
 };
+
 
 Matrix2D.prototype.set = function (i, j, val) {
     var pos = j * this.d1 + i;

@@ -423,7 +423,7 @@ var Graphs;
             var dims = adj_tmp.dim();
             var visited = new Matrix.Matrix2D(dims.d1, dims.d2, 0);
 
-            var edges = new Array();
+            var edges = [];
             var neighbors;
             var nb;
             var edge;
@@ -470,6 +470,10 @@ var M2D = Matrix.Matrix2D;
 
 var Regions;
 (function (Regions) {
+    /*
+    *   @member labels
+    *
+    */
     var RegionMap = (function () {
         function RegionMap(width, height, img) {
             this.regions = {};
@@ -482,7 +486,7 @@ var Regions;
                 arr[i] = i;
                 region = new Region(i);
 
-                // TODO outsource this to region class in some meaningful way
+                // TODO outsource this to region class
                 region.size = 1;
                 region.avg_color = img_arr[i];
                 x = i % width >>> 0;
@@ -526,7 +530,7 @@ var Regions;
     var Region = (function () {
         function Region(id) {
             this.id = id;
-            // TODO WHY OH WHY IS THE TYPE SYSTEM SO SHY ???
+            // TODO: WHY OH WHY IS THE TYPE SYSTEM SO SHY ???
             this.size = 0;
             this.avg_color = 0;
             this.centroid = [];
@@ -974,7 +978,7 @@ var drawLabelMap = function() {
         }
 
         if ( region.labelColor.length !== 3) {
-            region.labelColor[0] = ( ( Math.random() * 256 ) | 0 ); //  - 64 * (i % 4)
+            region.labelColor[0] = ( ( Math.random() * 256 ) | 0 );
             region.labelColor[1] = ( ( Math.random() * 256 ) | 0 );
             region.labelColor[2] = ( ( Math.random() * 256 ) | 0 );
         }
