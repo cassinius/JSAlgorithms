@@ -19,7 +19,7 @@ var demoAdjacencyList = function(width, height, data) {
     var start = new Date().getTime();
 
     var grayImg = new Images.GrayImage(width, height, data);
-    var adj_list = grayImg.computeAdjacencyList(true);
+    var adj_list = grayImg.computeNeighborhoods8(true);
 
     console.log("Adjacency List dimensions: " + width + ", " + height);
     var time = new Date().getTime() - start;
@@ -31,7 +31,7 @@ var demoEdgeListComputation = function(width, height, data) {
     var start = new Date().getTime();
 
     var grayImg = new Images.GrayImage(width, height, data);
-    var adj_list = grayImg.computeAdjacencyList(true);
+    var adj_list = grayImg.computeNeighborhoods8(true);
     var graph = new Graphs.Graph(adj_list);
 
     var time = new Date().getTime() - start;

@@ -97,7 +97,7 @@ describe("Simple Matrix Tests", function() {
         expect(JSON.stringify(prod_expect)).to.be.equal(JSON.stringify(prod_result));
     });
 
-    // TODO find out what's wrong here...
+
     it("Should correctly multiply two matrices giving a non-quadratic result", function() {
         var m1 = new M2D(7, 15, 4);
         var m2 = new M2D(10, 7, 7);
@@ -109,13 +109,84 @@ describe("Simple Matrix Tests", function() {
         }
     });
 
-    it("Should correctly determine neighbors (without color diff)", function () {
+
+    it("Should correctly compute uniform 4-neighbors (without color diff)", function () {
+        var matrix = new M2D(7, 15, 4);
+        var neighbors1 = matrix.getNeighbors4(1, 1);
+        expect(neighbors1.length).to.equal(4);
+        for (var k = 0; k < neighbors1.length; k++) {
+            expect(neighbors1[k][2]).to.equal(4);
+        }
+    });
+
+
+    it("Should correctly compute 4-neighbors (without color diff)", function () {
+        var arr0 = [0,1,2,3,4,5];
+        var m0 = M2D.generateMatrix(arr0, 3, 2);
+        var neighbors0 = m0.getNeighbors4(1, 0);
+
+        expect(neighbors0.length).to.equal(3);
+
+        expect(neighbors0[0][2]).to.equal(0);
+        expect(neighbors0[1][2]).to.equal(2);
+        expect(neighbors0[2][2]).to.equal(4);
+    });
+
+
+    it("Should correctly compute uniform 4-neighbors (color diff)", function () {
+        var matrix = new M2D(7, 15, 4);
+        var neighbors1 = matrix.getNeighbors4(1, 1, true);
+        expect(neighbors1.length).to.equal(4);
+        for (var k = 0; k < neighbors1.length; k++) {
+            expect(neighbors1[k][2]).to.equal(0);
+        }
+    });
+
+
+    it("Should correctly compute 4-neighbors (color diff)", function () {
+        var arr0 = [0,1,2,3,4,5];
+        var m0 = M2D.generateMatrix(arr0, 3, 2);
+        var neighbors0 = m0.getNeighbors4(1, 0, true);
+
+        expect(neighbors0.length).to.equal(3);
+
+        expect(neighbors0[0][2]).to.equal(1);
+        expect(neighbors0[1][2]).to.equal(1);
+        expect(neighbors0[2][2]).to.equal(3);
+    });
+
+
+    it("Should correctly compute 4-neighbors, upper right corner (color diff)", function () {
+        var arr0 = [0,1,2,3,4,5];
+        var m0 = M2D.generateMatrix(arr0, 3, 2);
+        var neighbors0 = m0.getNeighbors4(0, 0);
+
+        expect(neighbors0.length).to.equal(2);
+
+        expect(neighbors0[0][2]).to.equal(1);
+        expect(neighbors0[1][2]).to.equal(3);
+    });
+
+
+    it("Should correctly compute 4-neighbors, lower right corner (color diff)", function () {
+        var arr0 = [0,1,2,3,4,5];
+        var m0 = M2D.generateMatrix(arr0, 3, 2);
+        var neighbors0 = m0.getNeighbors4(2, 1);
+
+        expect(neighbors0.length).to.equal(2);
+
+        expect(neighbors0[0][2]).to.equal(4);
+        expect(neighbors0[1][2]).to.equal(2);
+    });
+
+
+    it("Should correctly determine 8-neighbors (without color diff)", function () {
         var arr0 = [0,1,2,3,4,5];
         var m0 = M2D.generateMatrix(arr0, 3, 2);
         var m1 = new M2D(7, 15, 4);
 
-        var neighbors0 = m0.getNeighbors(1, 0);
-        var neighbors1 = m1.getNeighbors(1, 1);
+        var neighbors0 = m0.getNeighbors8(1, 0);
+        var neighbors1 = m1.getNeighbors8(1, 1);
 
         expect(neighbors0.length).to.equal(5);
         expect(neighbors0[0][2]).to.equal(0);
@@ -132,10 +203,10 @@ describe("Simple Matrix Tests", function() {
     });
 
 
-    it("Should correctly determine neighbors (color diff)", function () {
+    it("Should correctly determine 8-neighbors (color diff)", function () {
         var arr0 = [0,1,2,3,4,5];
         var m0 = M2D.generateMatrix(arr0, 3, 2);
-        var neighbors2 = m0.getNeighbors(1, 0, true);
+        var neighbors2 = m0.getNeighbors8(1, 0, true);
 
         expect(neighbors2.length).to.equal(5);
         expect(neighbors2[0][2]).to.equal(1);

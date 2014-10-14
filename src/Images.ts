@@ -107,18 +107,17 @@ module Images {
             }
         }
 
-        computeAdjacencyList(color: boolean) : Matrix.Matrix2D {
+        computeNeighborhoods8(color: boolean) : Matrix.Matrix2D {
             var adj_list = new Matrix.Matrix2D(this.width, this.height);
 
             for( var x = 0; x < this.width; ++x ) {
                 for( var y = 0; y < this.height; ++y ) {
-                    adj_list.set(x, y, this.matrix.getNeighbors( x, y, color) );
+                    adj_list.set(x, y, this.matrix.getNeighbors8( x, y, color) );
                 }
             }
 
             return adj_list;
         }
-
 
     }
 

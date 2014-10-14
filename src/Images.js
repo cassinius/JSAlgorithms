@@ -1,9 +1,7 @@
 /// <reference path="../tsrefs/node.d.ts" />
 /// <reference path="./Helper.ts" />
 /// <reference path="./Matrix.ts" />
-
 var M2D = Matrix.Matrix2D;
-
 var Images;
 (function (Images) {
     var RgbImage = (function () {
@@ -15,7 +13,6 @@ var Images;
                 throw "Invalid dimensions or array length";
             }
             this.matrix = new M2D(width, height);
-
             for (var i = 0; i < width; ++i) {
                 for (var j = 0; j < height; ++j) {
                     var p = (j * width + i) * 4;
@@ -27,7 +24,6 @@ var Images;
         RgbImage.prototype.getArray = function () {
             return this.matrix.getArray();
         };
-
         RgbImage.prototype.toRgbaArray = function () {
             var rgba = new Array(this.width * this.height * 4);
             var rgb = this.matrix.getArray();
@@ -36,20 +32,19 @@ var Images;
                 if (i % 4 === 3) {
                     ++gaps;
                     rgba[i] = 1;
-                } else {
+                }
+                else {
                     rgba[i] = rgb[i - gaps];
                 }
             }
             return rgba;
         };
-
         RgbImage.prototype.toGrayImage = function () {
             return new GrayImage(this.width, this.height, this.toRgbaArray());
         };
         return RgbImage;
     })();
     Images.RgbImage = RgbImage;
-
     var GrayImage = (function () {
         // as we are only using this with HTML canvas, we always assume rgba inputs
         function GrayImage(width, height, rgba) {
@@ -59,7 +54,6 @@ var Images;
                 throw "Invalid dimensions or array length";
             }
             this.matrix = new M2D(width, height);
-
             for (var i = 0; i < width; ++i) {
                 for (var j = 0; j < height; ++j) {
                     var p = (j * width + i) * 4;
@@ -71,11 +65,9 @@ var Images;
         GrayImage.prototype.getArray = function () {
             return this.matrix.getArray();
         };
-
         GrayImage.prototype.getPixelIndex = function (i, j) {
             return this.matrix.getIndex(i, j);
         };
-
         GrayImage.prototype.toRgbaArray = function () {
             var rgba = new Uint8ClampedArray(this.width * this.height * 4);
             var pixels = this.matrix.getArray();
@@ -87,7 +79,6 @@ var Images;
             }
             return rgba;
         };
-
         GrayImage.prototype.fillRgbaArray = function (rgba) {
             var pixels = this.matrix.getArray();
             var pos = 0;
@@ -97,21 +88,17 @@ var Images;
                 pos += 4;
             }
         };
-
-        GrayImage.prototype.computeAdjacencyList = function (color) {
+        GrayImage.prototype.computeNeighborhoods8 = function (color) {
             var adj_list = new Matrix.Matrix2D(this.width, this.height);
-
             for (var x = 0; x < this.width; ++x) {
                 for (var y = 0; y < this.height; ++y) {
-                    adj_list.set(x, y, this.matrix.getNeighbors(x, y, color));
+                    adj_list.set(x, y, this.matrix.getNeighbors8(x, y, color));
                 }
             }
-
             return adj_list;
         };
         return GrayImage;
     })();
     Images.GrayImage = GrayImage;
-
     setModule('Images', Images);
 })(Images || (Images = {}));

@@ -34,7 +34,7 @@ for( var i = 0; i < width * height * 4; ++i ) {
 describe("Graph instantiation and computation of representation", function() {
     it("Should correctly compute the edge list out of an adj_list", function() {
         var grayImg: Images.GrayImage = new GrayImage(width, height, rgba);
-        var adj_list: Matrix.Matrix2D = grayImg.computeAdjacencyList(true);
+        var adj_list: Matrix.Matrix2D = grayImg.computeNeighborhoods8(true);
         var graph = new Graph(adj_list);
         var edge_list = graph.edge_list;
 
@@ -45,7 +45,7 @@ describe("Graph instantiation and computation of representation", function() {
 
     it("Should correctly sort the edgeList", function() {
         var grayImg: Images.GrayImage = new GrayImage(width, height, rgba);
-        var adj_list: Matrix.Matrix2D = grayImg.computeAdjacencyList(true);
+        var adj_list: Matrix.Matrix2D = grayImg.computeNeighborhoods8(true);
         var graph = new Graph(adj_list, true);
         var edge_list = graph.edge_list;
 

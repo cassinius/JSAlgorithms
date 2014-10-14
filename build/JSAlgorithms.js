@@ -374,7 +374,7 @@ var Images;
 
             for (var x = 0; x < this.width; ++x) {
                 for (var y = 0; y < this.height; ++y) {
-                    adj_list.set(x, y, this.matrix.getNeighbors(x, y, color));
+                    adj_list.set(x, y, this.matrix.getNeighbors8(x, y, color));
                 }
             }
 
@@ -608,7 +608,7 @@ var computeAdjacencyList = function() {
 
     setGlobals();
     window.grayImg = new Images.GrayImage(canvas.width, canvas.height, img.data);
-    window.adj_list = grayImg.computeAdjacencyList(true);
+    window.adj_list = grayImg.computeNeighborhoods8(true);
 
     var dims = adj_list.dim();
     console.log("Adjacency List dimensions: " + dims.d1 + ", " + dims.d2);
@@ -627,7 +627,7 @@ var computeEdgeList = function() {
     setGlobals();
 
     var grayImg = new Images.GrayImage(canvas.width, canvas.height, img.data);
-    var adj_list = grayImg.computeAdjacencyList(true);
+    var adj_list = grayImg.computeNeighborhoods8(true);
     window.graph = new Graphs.Graph(adj_list);
 
     var time = new Date().getTime() - start;
@@ -694,7 +694,7 @@ var prepareDataStructures = function() {
     var msg = "Converted to Gray Image...";
     updateProgress(msg);
 
-    window.adj_list = grayImg.computeAdjacencyList(true);
+    window.adj_list = grayImg.computeNeighborhoods8(true);
     msg = "Constructed Adjacency List...";
     updateProgress(msg);
 
@@ -800,7 +800,7 @@ var watershed = function() {
     var msg = "Converted to Gray Image...";
     updateProgress(msg);
     
-    window.adj_list = grayImg.computeAdjacencyList();
+    window.adj_list = grayImg.computeNeighborhoods8();
     msg = "Constructed Adjacency List...";
     updateProgress(msg);
 

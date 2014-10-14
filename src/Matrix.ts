@@ -140,16 +140,27 @@ module Matrix {
         }
 
 
-        getNeighbors(x: number, y: number, color: boolean = false) : Array<any> {
+        getNeighbors4(x: number, y: number, color: boolean = false) : Array<any> {
             var width = this.d1;
             var height = this.d2;
-
             var neighborsArray = [];
-            var pixel: any[];
 
-            var graylevel_here,
-                graylevel_there,
-                there;
+            if( x - 1 >= 0 )
+                neighborsArray.push( this.getColorDiff(x, -1, y, 0, color));
+            if( x + 1 < width )
+                neighborsArray.push( this.getColorDiff(x, 1, y, 0, color));
+            if( y - 1 >= 0 )
+                neighborsArray.push( this.getColorDiff(x, 0, y, -1, color));
+            if( y + 1 < height )
+                neighborsArray.push( this.getColorDiff(x, 0, y, 1, color));
+            return neighborsArray;
+        }
+
+
+        getNeighbors8(x: number, y: number, color: boolean = false) : Array<any> {
+            var width = this.d1;
+            var height = this.d2;
+            var neighborsArray = [];
 
             for (var n = -1; n < 2; n++) {
                 if(x + n < 0 || x + n >= width) {
@@ -162,29 +173,35 @@ module Matrix {
                     if(m == 0 && n == 0) {
                         continue;
                     }
-                    if( color ) {
-                        pixel = this.get(x, y);
-
-                        if( typeof pixel === 'number' ) { // already a Gray Image
-                            neighborsArray.push([x + n, y + m, Math.abs( this.get(x, y) - this.get(x + n, y + m))] );
-                        }
-                        else if( Array.isArray(pixel) ) { // RGB conversion !
-                            graylevel_here =  0.2126*pixel[0] + 0.7152*pixel[1] + 0.0722*pixel[2];
-                            there = this.get(x + n, y + m);
-                            graylevel_there = 0.2126*there[0] + 0.7152*there[1] + 0.0722*there[2];
-                            neighborsArray.push( [x + n, y + m, Math.abs(graylevel_here - graylevel_there)] );
-                        }
-                        else {
-                            throw "Unsupported Matrix field type!";
-                        }
-                    }
-                    else {
-                        neighborsArray.push( [x + n, y + m, this.get(x + n, y + m)] );
-                    }
+                    neighborsArray.push( this.getColorDiff(x, n, y, m, color) );
                 }
             }
-
             return neighborsArray;
+        }
+
+
+        getColorDiff( x: number, n: number, y: number, m: number, diff: boolean = false ) : Array<any> {
+            if( diff ) {
+                var here  = this.get(x, y),
+                    there = this.get(x + n, y + m);
+                if( typeof here === 'number' ) { // already a Gray Image
+                    // why Math.abs ? Don't we want gradients later.. ?
+                    return [x + n, y + m, Math.abs( here - there )];
+                    // neighborsArray.push([x + n, y + m, here - there] );
+                }
+                else if( Array.isArray(here) ) { // RGB conversion !
+                    var gray_here =  0.2126*here[0] + 0.7152*here[1] + 0.0722*here[2];
+                    there = this.get(x + n, y + m);
+                    var gray_there = 0.2126*there[0] + 0.7152*there[1] + 0.0722*there[2];
+                    return [x + n, y + m, Math.abs(gray_here - gray_there)];
+                }
+                else {
+                    throw "Unsupported Matrix field type!";
+                }
+            }
+            else {
+                return [x + n, y + m, this.get(x + n, y + m)];
+            }
         }
 
 

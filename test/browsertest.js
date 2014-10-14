@@ -65,7 +65,7 @@ var computeAdjacencyList = function() {
 
     setGlobals();
     window.grayImg = new Images.GrayImage(canvas.width, canvas.height, img.data);
-    window.adj_list = grayImg.computeAdjacencyList(true);
+    window.adj_list = grayImg.computeNeighborhoods8(true);
 
     var dims = adj_list.dim();
     console.log("Adjacency List dimensions: " + dims.d1 + ", " + dims.d2);
@@ -84,7 +84,7 @@ var computeEdgeList = function() {
     setGlobals();
 
     var grayImg = new Images.GrayImage(canvas.width, canvas.height, img.data);
-    var adj_list = grayImg.computeAdjacencyList(true);
+    var adj_list = grayImg.computeNeighborhoods8(true);
     window.graph = new Graphs.Graph(adj_list);
 
     var time = new Date().getTime() - start;
@@ -151,7 +151,7 @@ var prepareDataStructures = function() {
     var msg = "Converted to Gray Image...";
     updateProgress(msg);
 
-    window.adj_list = grayImg.computeAdjacencyList(true);
+    window.adj_list = grayImg.computeNeighborhoods8(true);
     msg = "Constructed Adjacency List...";
     updateProgress(msg);
 
@@ -230,7 +230,7 @@ var watershed = function() {
             fmin = f[n_i];
           }
         }
-        for (var i = 0; i < nbs.length; ++i) {
+        for (i = 0; i < nbs.length; ++i) {
           n_i = grayImg.getPixelIndex(nbs[i][0], nbs[i][1]);
           if (f[n_i] == fmin && l[n_i] > 0 && l[n_i] < lmin) {
             lmin = l[n_i];
@@ -257,7 +257,7 @@ var watershed = function() {
     var msg = "Converted to Gray Image...";
     updateProgress(msg);
     
-    window.adj_list = grayImg.computeAdjacencyList();
+    window.adj_list = grayImg.computeNeighborhoods8();
     msg = "Constructed Adjacency List...";
     updateProgress(msg);
 
@@ -481,9 +481,7 @@ var computeDelauney = function() {
     updateProgress(msg);
 
 
-    ///////////////////////////////////////////////////////////
-    /////////////////// EXECUTE DELAUNEY //////////////////////
-    ///////////////////////////////////////////////////////////
+    // execute Delaunay
     triangles = Delaunay.triangulate( vertices );
 };
 

@@ -60,15 +60,11 @@ describe("Get an adjacency list of a simple image", function() {
             rgba[i] = (Math.random() * 256) >>> 0;
         }
     }
+
     it("Should compute an adjacency matrix of correct dimensions", function() {
         var img: Images.GrayImage = new GrayImage(width, height, rgba);
         var rgb: Array<any> = img.getArray();
-        var adj_list: Matrix.Matrix2D = img.computeAdjacencyList(true);
-
-    //    console.log(adj_list.dim());
-    //    console.log(adj_list.get(1,1));
-    //    console.log(adj_list.toString());
-
+        var adj_list: Matrix.Matrix2D = img.computeNeighborhoods8(true);
         var dim_expect = JSON.stringify( {d1: width, d2: height} );
         var dim_result = JSON.stringify( adj_list.dim() );
         expect(dim_expect).to.equal(dim_result);
@@ -78,6 +74,16 @@ describe("Get an adjacency list of a simple image", function() {
                 expect(adj_list.get(i, j).length).to.equal(3);
             }
         }
-    })
+    });
+
+    // TODO
+    it("Should compute a correct adjacency matrix for 4-Neighborhoods", function() {
+
+    });
+
+    // TODO
+    it("Should compute a correct adjacency matrix for 8-Neighborhoods", function() {
+
+    });
 });
 
