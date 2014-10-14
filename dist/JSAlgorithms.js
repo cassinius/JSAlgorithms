@@ -1,27 +1,24 @@
 /// <reference path="../tsrefs/node.d.ts" />
 var ROOT;
-
 var Helper;
 (function (Helper) {
     function setModule(name, mod) {
         ROOT[name] = mod;
     }
     Helper.setModule = setModule;
-
     function initGEObject() {
         if (typeof module !== 'undefined' && module.exports) {
             ROOT = global;
-        } else {
+        }
+        else {
             ROOT = window;
         }
     }
-
     initGEObject();
     setModule('setModule', setModule);
 })(Helper || (Helper = {}));
 /// <reference path="../tsrefs/node.d.ts" />
 /// <reference path="./Helper.ts" />
-
 var Matrix;
 (function (Matrix) {
     var Matrix2D = (function () {
@@ -31,7 +28,6 @@ var Matrix;
             this.arr_length = 0;
             this.arr_length = this.d1 * this.d2;
             this.arr = new Array(this.arr_length);
-
             if (fill === fill) {
                 for (var i = 0; i < this.arr_length; ++i) {
                     this.arr[i] = fill;
@@ -46,7 +42,6 @@ var Matrix;
             matrix.setArray(arr);
             return matrix;
         };
-
         Matrix2D.copyMatrix = function (source) {
             var dims = source.dim();
             var dest = new Matrix2D(dims.d1, dims.d2);
@@ -55,32 +50,29 @@ var Matrix;
                     var px = source.get(i, j);
                     if (typeof px === 'number') {
                         dest.set(i, j, px);
-                    } else if (Array.isArray(px)) {
+                    }
+                    else if (Array.isArray(px)) {
                         dest.set(i, j, px.slice(0));
-                    } else {
+                    }
+                    else {
                         throw "Unsupported matrix field type!";
                     }
                 }
             }
             return dest;
         };
-
         Matrix2D.prototype.getArray = function () {
             return this.arr;
         };
-
         Matrix2D.prototype.setArray = function (arr) {
             this.arr = arr;
         };
-
         Matrix2D.prototype.dim = function () {
             return { d1: this.d1, d2: this.d2 };
         };
-
         Matrix2D.prototype.length = function () {
             return this.arr_length;
         };
-
         Matrix2D.prototype.get = function (i, j) {
             var pos = j * this.d1 + i;
             if (pos >= this.length()) {
@@ -88,11 +80,9 @@ var Matrix;
             }
             return this.arr[pos];
         };
-
         Matrix2D.prototype.getIndex = function (i, j) {
             return j * this.d1 + i;
         };
-
         Matrix2D.prototype.set = function (i, j, val) {
             var pos = j * this.d1 + i;
             if (pos >= this.length()) {
@@ -100,7 +90,6 @@ var Matrix;
             }
             this.arr[pos] = val;
         };
-
         Matrix2D.prototype.add = function (other) {
             var dim_other = other.dim();
             if (this.d1 !== dim_other.d1 || this.d2 !== dim_other.d2) {
@@ -114,7 +103,6 @@ var Matrix;
             }
             return result;
         };
-
         Matrix2D.prototype.sub = function (other) {
             var dim_other = other.dim();
             if (this.d1 !== dim_other.d1 || this.d2 !== dim_other.d2) {
@@ -128,14 +116,12 @@ var Matrix;
             }
             return result;
         };
-
         Matrix2D.prototype.mult = function (other) {
             var other_dim = other.dim();
             if (this.d1 !== other_dim.d2) {
                 throw "Dimensions do now allow multiplication; refusing!";
             }
             var result = new Matrix2D(other_dim.d1, this.d2);
-
             for (var j = 0; j < this.d2; ++j) {
                 for (var i = 0; i < other_dim.d1; ++i) {
                     // result position => i, j
@@ -149,17 +135,26 @@ var Matrix;
             }
             return result;
         };
-
-        Matrix2D.prototype.getNeighbors = function (x, y, color) {
-            if (typeof color === "undefined") { color = false; }
+        Matrix2D.prototype.getNeighbors4 = function (x, y, color) {
+            if (color === void 0) { color = false; }
             var width = this.d1;
             var height = this.d2;
-
             var neighborsArray = [];
-            var pixel;
-
-            var graylevel_here, graylevel_there, there;
-
+            if (x - 1 >= 0)
+                neighborsArray.push(this.getColorDiff(x, -1, y, 0, color));
+            if (x + 1 < width)
+                neighborsArray.push(this.getColorDiff(x, 1, y, 0, color));
+            if (y - 1 >= 0)
+                neighborsArray.push(this.getColorDiff(x, 0, y, -1, color));
+            if (y + 1 < height)
+                neighborsArray.push(this.getColorDiff(x, 0, y, 1, color));
+            return neighborsArray;
+        };
+        Matrix2D.prototype.getNeighbors8 = function (x, y, color) {
+            if (color === void 0) { color = false; }
+            var width = this.d1;
+            var height = this.d2;
+            var neighborsArray = [];
             for (var n = -1; n < 2; n++) {
                 if (x + n < 0 || x + n >= width) {
                     continue;
@@ -171,28 +166,33 @@ var Matrix;
                     if (m == 0 && n == 0) {
                         continue;
                     }
-                    if (color) {
-                        pixel = this.get(x, y);
-
-                        if (typeof pixel === 'number') {
-                            neighborsArray.push([x + n, y + m, Math.abs(this.get(x, y) - this.get(x + n, y + m))]);
-                        } else if (Array.isArray(pixel)) {
-                            graylevel_here = 0.2126 * pixel[0] + 0.7152 * pixel[1] + 0.0722 * pixel[2];
-                            there = this.get(x + n, y + m);
-                            graylevel_there = 0.2126 * there[0] + 0.7152 * there[1] + 0.0722 * there[2];
-                            neighborsArray.push([x + n, y + m, Math.abs(graylevel_here - graylevel_there)]);
-                        } else {
-                            throw "Unsupported Matrix field type!";
-                        }
-                    } else {
-                        neighborsArray.push([x + n, y + m, this.get(x + n, y + m)]);
-                    }
+                    neighborsArray.push(this.getColorDiff(x, n, y, m, color));
                 }
             }
-
             return neighborsArray;
         };
-
+        Matrix2D.prototype.getColorDiff = function (x, n, y, m, diff) {
+            if (diff === void 0) { diff = false; }
+            if (diff) {
+                var here = this.get(x, y), there = this.get(x + n, y + m);
+                if (typeof here === 'number') {
+                    // why Math.abs ? Don't we want gradients later.. ?
+                    return [x + n, y + m, Math.abs(here - there)];
+                }
+                else if (Array.isArray(here)) {
+                    var gray_here = 0.2126 * here[0] + 0.7152 * here[1] + 0.0722 * here[2];
+                    there = this.get(x + n, y + m);
+                    var gray_there = 0.2126 * there[0] + 0.7152 * there[1] + 0.0722 * there[2];
+                    return [x + n, y + m, Math.abs(gray_here - gray_there)];
+                }
+                else {
+                    throw "Unsupported Matrix field type!";
+                }
+            }
+            else {
+                return [x + n, y + m, this.get(x + n, y + m)];
+            }
+        };
         Matrix2D.prototype.toString = function () {
             console.log("Matrix representation:\n");
             for (var j = 0; j < this.d2; ++j) {
@@ -206,15 +206,13 @@ var Matrix;
         return Matrix2D;
     })();
     Matrix.Matrix2D = Matrix2D;
-
     setModule('Matrix', Matrix);
 })(Matrix || (Matrix = {}));
 /**
-* Created by bernd on 19.05.14.
-*/
+ * Created by bernd on 19.05.14.
+ */
 /// <reference path="../tsrefs/node.d.ts" />
 /// <reference path="./Helper.ts" />
-
 var DJSet;
 (function (DJSet) {
     var DisjointSet = (function () {
@@ -227,7 +225,6 @@ var DJSet;
             for (var i = 0; i < size; ++i) {
                 // every region is it's own parent at the beginning
                 this.parents[i] = i;
-
                 // every region has rank = 0 (no children)
                 this.ranks[i] = 0;
             }
@@ -235,46 +232,42 @@ var DJSet;
         DisjointSet.prototype.getSize = function () {
             return this.size;
         };
-
         DisjointSet.prototype.find = function (region) {
             var p = this.parents[region];
             if (p === region) {
                 return p;
-            } else {
+            }
+            else {
                 return this.find(p);
             }
         };
-
         DisjointSet.prototype.union = function (r1, r2) {
             if (this.ranks[r1] > this.ranks[r2]) {
                 this.parents[r2] = r1;
-            } else if (this.ranks[r2] > this.ranks[r1]) {
+            }
+            else if (this.ranks[r2] > this.ranks[r1]) {
                 this.parents[r1] = r2;
-            } else {
+            }
+            else {
                 this.parents[r2] = r1;
                 this.ranks[r1]++;
             }
         };
-
         DisjointSet.prototype.rank = function (r) {
             return this.ranks[r];
         };
-
         DisjointSet.prototype.parent = function (r) {
             return this.parents[r];
         };
         return DisjointSet;
     })();
     DJSet.DisjointSet = DisjointSet;
-
     setModule('DJSet', DJSet);
 })(DJSet || (DJSet = {}));
 /// <reference path="../tsrefs/node.d.ts" />
 /// <reference path="./Helper.ts" />
 /// <reference path="./Matrix.ts" />
-
 var M2D = Matrix.Matrix2D;
-
 var Images;
 (function (Images) {
     var RgbImage = (function () {
@@ -286,7 +279,6 @@ var Images;
                 throw "Invalid dimensions or array length";
             }
             this.matrix = new M2D(width, height);
-
             for (var i = 0; i < width; ++i) {
                 for (var j = 0; j < height; ++j) {
                     var p = (j * width + i) * 4;
@@ -298,7 +290,6 @@ var Images;
         RgbImage.prototype.getArray = function () {
             return this.matrix.getArray();
         };
-
         RgbImage.prototype.toRgbaArray = function () {
             var rgba = new Array(this.width * this.height * 4);
             var rgb = this.matrix.getArray();
@@ -307,20 +298,19 @@ var Images;
                 if (i % 4 === 3) {
                     ++gaps;
                     rgba[i] = 1;
-                } else {
+                }
+                else {
                     rgba[i] = rgb[i - gaps];
                 }
             }
             return rgba;
         };
-
         RgbImage.prototype.toGrayImage = function () {
             return new GrayImage(this.width, this.height, this.toRgbaArray());
         };
         return RgbImage;
     })();
     Images.RgbImage = RgbImage;
-
     var GrayImage = (function () {
         // as we are only using this with HTML canvas, we always assume rgba inputs
         function GrayImage(width, height, rgba) {
@@ -330,7 +320,6 @@ var Images;
                 throw "Invalid dimensions or array length";
             }
             this.matrix = new M2D(width, height);
-
             for (var i = 0; i < width; ++i) {
                 for (var j = 0; j < height; ++j) {
                     var p = (j * width + i) * 4;
@@ -342,11 +331,9 @@ var Images;
         GrayImage.prototype.getArray = function () {
             return this.matrix.getArray();
         };
-
         GrayImage.prototype.getPixelIndex = function (i, j) {
             return this.matrix.getIndex(i, j);
         };
-
         GrayImage.prototype.toRgbaArray = function () {
             var rgba = new Uint8ClampedArray(this.width * this.height * 4);
             var pixels = this.matrix.getArray();
@@ -358,7 +345,6 @@ var Images;
             }
             return rgba;
         };
-
         GrayImage.prototype.fillRgbaArray = function (rgba) {
             var pixels = this.matrix.getArray();
             var pos = 0;
@@ -368,31 +354,25 @@ var Images;
                 pos += 4;
             }
         };
-
-        GrayImage.prototype.computeAdjacencyList = function (color) {
+        GrayImage.prototype.computeNeighborhoods8 = function (color) {
             var adj_list = new Matrix.Matrix2D(this.width, this.height);
-
             for (var x = 0; x < this.width; ++x) {
                 for (var y = 0; y < this.height; ++y) {
                     adj_list.set(x, y, this.matrix.getNeighbors8(x, y, color));
                 }
             }
-
             return adj_list;
         };
         return GrayImage;
     })();
     Images.GrayImage = GrayImage;
-
     setModule('Images', Images);
 })(Images || (Images = {}));
 /// <reference path="../tsrefs/node.d.ts" />
 /// <reference path="./Helper.ts" />
 /// <reference path="./Matrix.ts" />
 /// <reference path="./Images.ts" />
-
 var M2D = Matrix.Matrix2D;
-
 var Graphs;
 (function (Graphs) {
     var Graph = (function () {
@@ -404,72 +384,62 @@ var Graphs;
             }
         }
         Graph.prototype.sort = function (up) {
-            if (typeof up === "undefined") { up = true; }
+            if (up === void 0) { up = true; }
             var sortfunc;
             if (up) {
                 sortfunc = function (a, b) {
                     return a.w - b.w;
                 };
-            } else {
+            }
+            else {
                 sortfunc = function (a, b) {
                     return b.w - a.w;
                 };
             }
             this.edge_list.sort(sortfunc);
         };
-
         Graph.prototype.computeEdgeList = function () {
             var adj_tmp = this.adj_list;
             var dims = adj_tmp.dim();
             var visited = new Matrix.Matrix2D(dims.d1, dims.d2, 0);
-
-            var edges = new Array();
+            var edges = [];
             var neighbors;
             var nb;
             var edge;
-
             for (var i = 0; i < dims.d1; ++i) {
                 for (var j = 0; j < dims.d2; ++j) {
                     // mark the pixel deleted (=> add no more edges to this one)
                     visited.set(i, j, 1);
-
                     // get connected pixels
                     neighbors = adj_tmp.get(i, j);
-
                     for (var k = 0; k < neighbors.length; ++k) {
                         nb = neighbors[k];
-
                         // this neighbor already deleted? => continue
                         if (visited.get(nb[0], nb[1])) {
                             continue;
                         }
-                        edge = {
-                            p1: [i, j],
-                            p2: [nb[0], nb[1]],
-                            w: nb[2]
-                        };
-
+                        edge = { p1: [i, j], p2: [nb[0], nb[1]], w: nb[2] };
                         edges.push(edge);
                     }
                 }
             }
-
             return edges;
         };
         return Graph;
     })();
     Graphs.Graph = Graph;
-
     setModule('Graphs', Graphs);
 })(Graphs || (Graphs = {}));
 /// <reference path="../tsrefs/node.d.ts" />
 /// <reference path="./Helper.ts" />
 /// <reference path="./Matrix.ts" />
-
 var M2D = Matrix.Matrix2D;
-
 var Regions;
 (function (Regions) {
+    /*
+    *   @member labels
+    *
+    */
     var RegionMap = (function () {
         function RegionMap(width, height, img) {
             this.regions = {};
@@ -477,17 +447,14 @@ var Regions;
             var arr = this.labels.getArray();
             var img_arr = img.getArray();
             var x, y, region;
-
             for (var i = 0; i < arr.length; ++i) {
                 arr[i] = i;
                 region = new Region(i);
-
-                // TODO outsource this to region class in some meaningful way
+                // TODO outsource this to region class
                 region.size = 1;
                 region.avg_color = img_arr[i];
                 x = i % width >>> 0;
                 y = (i / width) >>> 0;
-
                 //                region.pixels.push( [ x, y, img_arr[i] ]);
                 region.centroid = [x, y];
                 this.regions[i] = region;
@@ -496,37 +463,30 @@ var Regions;
         RegionMap.prototype.merge = function (r1, r2, e) {
             // Set new internal maxEdge
             r1.maxEdge = e.w;
-
             // Set new avg color (as integer)
             r1.avg_color = ((r1.avg_color * r1.size + r2.avg_color * r2.size) / (r1.size + r2.size)) | 0;
-
             var sum_size = r1.size + r2.size;
-
             // Set the centroid and update the size (we assume 2D centroids)
             r1.centroid[0] = (r1.centroid[0] * r1.size + r2.centroid[0] * r2.size) / sum_size;
             r1.centroid[1] = (r1.centroid[1] * r1.size + r2.centroid[1] * r2.size) / sum_size;
             r1.size = sum_size;
-
             // mark the region r2 deleted
             r2.deleted = true;
         };
-
         RegionMap.prototype.getRegion = function (px) {
             var key = this.labels.get(px[0], px[1]);
             return this.regions[key];
         };
-
         RegionMap.prototype.getRegionByIndex = function (idx) {
             return this.regions[idx];
         };
         return RegionMap;
     })();
     Regions.RegionMap = RegionMap;
-
     var Region = (function () {
         function Region(id) {
             this.id = id;
-            // TODO WHY OH WHY IS THE TYPE SYSTEM SO SHY ???
+            // TODO: WHY OH WHY IS THE TYPE SYSTEM SO SHY ???
             this.size = 0;
             this.avg_color = 0;
             this.centroid = [];
@@ -538,7 +498,6 @@ var Regions;
         return Region;
     })();
     Regions.Region = Region;
-
     setModule('Regions', Regions);
 })(Regions || (Regions = {}));
 ///////////////////////////////////////////////////////////
@@ -600,7 +559,7 @@ var demoGrayScale = function() {
 ///////////////////////////////////////////////////////////
 /////////////// ADJACENCY LIST COMPUTATION ////////////////
 ///////////////////////////////////////////////////////////
-var computeAdjacencyList = function() {
+var computeNeighborhoods8 = function() {
     delete window.grayImg;
     delete window.adj_list;
 
@@ -974,7 +933,7 @@ var drawLabelMap = function() {
         }
 
         if ( region.labelColor.length !== 3) {
-            region.labelColor[0] = ( ( Math.random() * 256 ) | 0 ); //  - 64 * (i % 4)
+            region.labelColor[0] = ( ( Math.random() * 256 ) | 0 );
             region.labelColor[1] = ( ( Math.random() * 256 ) | 0 );
             region.labelColor[2] = ( ( Math.random() * 256 ) | 0 );
         }

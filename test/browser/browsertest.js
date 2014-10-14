@@ -57,7 +57,7 @@ var demoGrayScale = function() {
 ///////////////////////////////////////////////////////////
 /////////////// ADJACENCY LIST COMPUTATION ////////////////
 ///////////////////////////////////////////////////////////
-var computeAdjacencyList = function() {
+var computeNeighborhoods8 = function() {
     delete window.grayImg;
     delete window.adj_list;
 
@@ -230,7 +230,7 @@ var watershed = function() {
             fmin = f[n_i];
           }
         }
-        for (i = 0; i < nbs.length; ++i) {
+        for (var i = 0; i < nbs.length; ++i) {
           n_i = grayImg.getPixelIndex(nbs[i][0], nbs[i][1]);
           if (f[n_i] == fmin && l[n_i] > 0 && l[n_i] < lmin) {
             lmin = l[n_i];
@@ -431,7 +431,7 @@ var drawLabelMap = function() {
         }
 
         if ( region.labelColor.length !== 3) {
-            region.labelColor[0] = ( ( Math.random() * 256 ) | 0 ); //  - 64 * (i % 4)
+            region.labelColor[0] = ( ( Math.random() * 256 ) | 0 );
             region.labelColor[1] = ( ( Math.random() * 256 ) | 0 );
             region.labelColor[2] = ( ( Math.random() * 256 ) | 0 );
         }
@@ -481,7 +481,9 @@ var computeDelauney = function() {
     updateProgress(msg);
 
 
-    // execute Delaunay
+    ///////////////////////////////////////////////////////////
+    /////////////////// EXECUTE DELAUNEY //////////////////////
+    ///////////////////////////////////////////////////////////
     triangles = Delaunay.triangulate( vertices );
 };
 
