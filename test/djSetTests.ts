@@ -55,6 +55,7 @@ describe("DJSet Tests", function() {
         expect(djs.rank(2)).to.equal(1);
         expect(djs.rank(0)).to.equal(2);
 
+
         // merge region 4 into 0 (now all nodes in 0)
         djs.union(4, 0);
         expect(djs.parent(4)).to.equal(0);

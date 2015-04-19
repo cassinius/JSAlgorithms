@@ -1,0 +1,22 @@
+{
+    "version": "1.4.1",
+    "compilerOptions": {
+        "target": "es5",
+        "module": "commonjs",
+        "declaration": false,
+        "noImplicitAny": false,
+        "removeComments": true,
+        "noLib": false
+    },
+    "filesGlob": [
+        "./**/*.ts",
+        "!./node_modules/**/*.ts"
+    ],
+    "files": [
+        "./djSetTests.ts",
+        "./graphTests.ts",
+        "./imagesTests.ts",
+        "./matrixTests.ts",
+        "./regionTests.ts"
+    ]
+}

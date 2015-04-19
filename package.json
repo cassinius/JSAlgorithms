@@ -1,8 +1,8 @@
 {
   "name": "JSAlgorithms",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "JavaScript Algorithms and Data Structures for Graph extraction from images and Graph Analysis",
-  "main": "index.js",
+  "main": "",
   "scripts": {
     "test": "mocha tests"
   },
@@ -27,14 +27,17 @@
   },
   "homepage": "https://github.com/cassinius/JSAlgorithms",
   "devDependencies": {
+    "chai": "^1.9.1",
     "grunt": "^0.4.4",
+    "grunt-contrib-concat": "^0.4.0",
     "grunt-contrib-jshint": "~0.6.3",
     "grunt-contrib-nodeunit": "~0.2.0",
     "grunt-contrib-uglify": "~0.2.2",
     "grunt-contrib-watch": "^0.6.1",
+    "grunt-mocha-cli": "^1.13.0",
+    "grunt-mocha-test": "^0.12.7",
     "grunt-shell": "^0.6.4",
-    "grunt-contrib-concat": "^0.4.0",
-    "chai": "^1.9.1",
+    "mocha": "^2.2.4",
     "pngjs": "^0.4.0"
   }
 }

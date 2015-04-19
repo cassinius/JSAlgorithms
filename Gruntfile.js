@@ -25,7 +25,7 @@ module.exports = function(grunt) {
                     stdout: true,
                     stderr: true
                 },
-                command: 'mocha'
+                command: 'mocha --colors'
             },
             compileTS: {
                 options: {

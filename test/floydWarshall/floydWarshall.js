@@ -111,7 +111,7 @@ var computeFloydWarshall = function(file) {
         }
     }
 
-    // Put out SHORTEST SHORTEST PATH
+    // Put out SHORTEST SHORTEST PATH LENGTH
     for ( i = 0; i < n; ++i ) {
         for ( j = 0; j < n; ++j ) {
             if ( dist.get(i,j) < min ) {
