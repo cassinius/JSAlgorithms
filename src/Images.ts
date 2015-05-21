@@ -56,7 +56,6 @@ module Images {
     }
 
 
-
     export class GrayImage {
         private matrix: Matrix.Matrix2D;
 

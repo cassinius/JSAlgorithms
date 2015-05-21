@@ -39,7 +39,7 @@ module.exports = function(grunt) {
                     stdout: true,
                     stderr: true
                 },
-                command: 'cp dist/JSAlgorithms.js /var/www/html/graphext/js/'
+                command: 'cp dist/JSAlgorithms.js /Library/WebServer/Documents/imgextract/js/' // '/var/www/html/graphext/js/'
             }
         },
         concat: {
@@ -47,8 +47,7 @@ module.exports = function(grunt) {
                 separator: ''
             },
             dist: {
-                src: ['src/Helper.js', 'src/Matrix.js', 'src/DisjointSet.js', 'src/Images.js', 'src/Graphs.js', 'src/Region.js',
-                      'test/browser/browsertest.js'],
+                src: ['src/Helper.js', 'src/Matrix.js', 'src/DisjointSet.js', 'src/Images.js', 'src/Graphs.js', 'src/Region.js', 'test/browser/browsertest.js'],
                 dest: 'dist/JSAlgorithms.js'
             }
         }

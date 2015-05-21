@@ -95,12 +95,13 @@ var computeEdgeList = function() {
 ///////////////////////////////////////////////////////////
 //////////// HOUSEKEEPING AND UI PREPARATION //////////////
 ///////////////////////////////////////////////////////////
-var startGraphExtraction = function(algo) {
+var startGraphExtraction = function(algo, callback) {
     delete window.grayImg;
     delete window.adj_list;
     delete window.graph;
     delete window.rMap;
     delete window.djs;
+    delete window.outGraph;
 
     setGlobals();
 
@@ -117,7 +118,7 @@ var startGraphExtraction = function(algo) {
         case "watershed":   algoToExecute = watershed;
                             break; 
     }
-    setTimeout(function() {
+    //setTimeout(function() {
         // execute Main Image Segmentation Algorithm
         // TODO: in the future, this will be handeled by a webworker
         algoToExecute();
@@ -133,10 +134,15 @@ var startGraphExtraction = function(algo) {
         // and draw it
         drawDelauney();
 
-        // now let's construct the graph object and we're finished
+        // now let's construct the graph object
         buildGraphObject();
 
-    }, 50);
+        // finally, execute the callback if provided
+        if ( callback ) {
+            callback();
+        }
+
+    //}, 50);
 };
 
 
@@ -508,8 +514,11 @@ var drawDelauney = function() {
 /////////////// BUILDING THE GRAPH OBJECT /////////////////
 ///////////////////////////////////////////////////////////
 var buildGraphObject = function() {
-    var region;
-    var tri;
+    outGraph.vertices = vertices.length;
+    outGraph.edges = triangles.length;
+    var region,
+        tri,
+        i;
     for( i = 0; i < triangles.length - 1; ) {
         tri = triangles[i];
         region = vertices_map[tri];
@@ -517,20 +526,19 @@ var buildGraphObject = function() {
             outGraph[tri] = {
                 node: tri,
                 coords: {
-                    x: region.centroid[0],
-                    y: region.centroid[1],
-                    z: region.avg_color
+                    x: parseFloat(region.centroid[0].toFixed(2)),
+                    y: parseFloat(region.centroid[1].toFixed(2)),
+                    z: parseFloat(region.avg_color.toFixed(2))
                 },
-                features: {},
+                //features: {},
                 edges: []
             };
         }
-
         // we already got that node, just add the next edge
         outGraph[tri].edges.push(triangles[++i]);
     }
 
     document.querySelector("#img_regions .value").textContent = vertices.length;
-    msg = "Graph with " + vertices.length + " vertices constructed! FINISHED in ";
+    msg = "Graph with " + vertices.length + " vertices and " + triangles.length + " edges constructed! FINISHED in ";
     updateProgress(msg);
 };
