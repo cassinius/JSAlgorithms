@@ -634,10 +634,13 @@ var startGraphExtraction = function(algo, callback) {
         computeDelauney();
 
         // and draw it
-        drawDelauney();
+        //drawDelauney();
 
         // now let's construct the graph object
         buildGraphObject();
+
+        // and draw graph
+        drawGraph();
 
         // finally, execute the callback if provided
         if ( callback ) {
@@ -996,6 +999,84 @@ var computeDelauney = function() {
 };
 
 
+
+///////////////////////////////////////////////////////////
+/////////////// BUILDING THE GRAPH OBJECT /////////////////
+///////////////////////////////////////////////////////////
+var buildGraphObject = function() {
+
+    //console.log("TRIANGLES LENGTH: " + triangles.length);
+
+    outGraph.data = {};
+
+    // Initialize nr_edges to triangles length, although we will change it later
+    var nr_edges = 0;
+    var region,
+        tri,
+        i;
+    for( i = 0; i < triangles.length - 1; i++ ) {
+        tri = triangles[i];
+        region = vertices_map[tri];
+        if ( typeof outGraph.data[tri] === 'undefined' ) {
+            outGraph.data[tri] = {
+                node: tri,
+                coords: {
+                    x: parseFloat(region.centroid[0].toFixed(2)),
+                    y: parseFloat(region.centroid[1].toFixed(2)),
+                    z: parseFloat(region.avg_color.toFixed(2))
+                },
+                //features: {},
+                edges: []
+            };
+        }
+
+        var edges = [];
+
+        if (i % 3 === 0) {
+            edges = [triangles[i+1], triangles[i+2]];
+        }
+        else if (i % 3 === 1) {
+            edges = [triangles[i+1]];
+        }
+        else if (i % 3 === 2) {
+            edges = [];
+        }
+
+        for (var n = 0; n < edges.length; n++) {
+            var tri_node = edges[n];
+            // tri_node must not be same node
+            if (tri_node === tri) {
+                continue;
+            }
+
+            var duplicate_edge = false;
+            if (typeof outGraph.data[tri_node] !== 'undefined') {
+                var other_edges = outGraph.data[tri_node].edges;
+
+                if ( other_edges.includes(tri) ) {
+                    duplicate_edge = true;
+                }
+            }
+
+            if ( outGraph.data[tri].edges.includes(tri_node) ) {
+                duplicate_edge = true;
+            }
+            if ( !duplicate_edge ) {
+                outGraph.data[tri].edges.push(tri_node);
+                nr_edges++;
+            }
+        }
+    }
+
+    outGraph.vertices = vertices.length;
+    outGraph.edges = nr_edges;
+
+    document.querySelector("#img_regions .value").textContent = "" + vertices.length;
+    msg = "Graph with " + vertices.length + " vertices and " + nr_edges + " edges constructed! FINISHED in ";
+    updateProgress(msg);
+};
+
+
 ///////////////////////////////////////////////////////////
 ////////////////// DRAW DELAUNEY TO UI ////////////////////
 ///////////////////////////////////////////////////////////
@@ -1012,35 +1093,54 @@ var drawDelauney = function() {
 };
 
 
-///////////////////////////////////////////////////////////
-/////////////// BUILDING THE GRAPH OBJECT /////////////////
-///////////////////////////////////////////////////////////
-var buildGraphObject = function() {
-    outGraph.vertices = vertices.length;
-    outGraph.edges = triangles.length;
-    var region,
-        tri,
-        i;
-    for( i = 0; i < triangles.length - 1; ) {
-        tri = triangles[i];
-        region = vertices_map[tri];
-        if ( typeof outGraph[tri] === 'undefined' ) {
-            outGraph[tri] = {
-                node: tri,
-                coords: {
-                    x: parseFloat(region.centroid[0].toFixed(2)),
-                    y: parseFloat(region.centroid[1].toFixed(2)),
-                    z: parseFloat(region.avg_color.toFixed(2))
-                },
-                //features: {},
-                edges: []
-            };
-        }
-        // we already got that node, just add the next edge
-        outGraph[tri].edges.push(triangles[++i]);
-    }
+//-------------------------------------------------------
+//                  DRAW GRAPH TO UI
+//-------------------------------------------------------
+var drawGraph = function() {
+    delctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    document.querySelector("#img_regions .value").textContent = vertices.length;
-    msg = "Graph with " + vertices.length + " vertices and " + triangles.length + " edges constructed! FINISHED in ";
-    updateProgress(msg);
+    var node_keys = Object.keys(outGraph.data);
+    for ( var i = 0; i < node_keys.length; i++ ) {
+        var node = outGraph.data[node_keys[i]];
+        for (var e = 0; e < node.edges.length; e++) {
+            var edge = node.edges[e];
+            delctx.beginPath();
+            delctx.moveTo(node.coords.x, node.coords.y);
+            delctx.lineTo(outGraph.data[edge].coords.x, outGraph.data[edge].coords.y);
+            delctx.stroke();
+        }
+    }
 };
+
+
+//-------------------------------------------------------
+//                 ARRAY INCLUDES HELPER
+//-------------------------------------------------------
+if (![].includes) {
+    Array.prototype.includes = function(searchElement /*, fromIndex*/ ) {
+        'use strict';
+        var O = Object(this);
+        var len = parseInt(O.length) || 0;
+        if (len === 0) {
+            return false;
+        }
+        var n = parseInt(arguments[1]) || 0;
+        var k;
+        if (n >= 0) {
+            k = n;
+        } else {
+            k = len + n;
+            if (k < 0) {k = 0;}
+        }
+        var currentElement;
+        while (k < len) {
+            currentElement = O[k];
+            if (searchElement === currentElement ||
+                (searchElement !== searchElement && currentElement !== currentElement)) {
+                return true;
+            }
+            k++;
+        }
+        return false;
+    };
+}
