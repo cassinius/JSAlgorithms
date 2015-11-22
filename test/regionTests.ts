@@ -3,16 +3,18 @@
 /// <reference path="../tsrefs/chai.d.ts" />
 /// <reference path="../src/Matrix.ts" />
 /// <reference path="../src/Images.ts" />
+/// <reference path="../src/ImgGraph.ts" />
 /// <reference path="../src/Region.ts" />
 
 var expect = require('chai').expect;
 require('../src/Helper.js');
 require('../src/Matrix.js');
 require('../src/Images.js');
+require('../src/ImgGraphs.js');
 require('../src/Region.js');
 
 var M2D = Matrix.Matrix2D;
-var Graph = Graphs.Graph;
+var Graph = ImgGraphs.ImgGraph;
 var Region = Regions.Region;
 var RMap = Regions.RegionMap;
 

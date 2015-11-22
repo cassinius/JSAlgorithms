@@ -40,6 +40,13 @@ module.exports = function(grunt) {
                     stderr: true
                 },
                 command: 'cp dist/JSAlgorithms.js /var/www/html/graphext/js/'
+            },
+            clean: {
+              options: {
+                    stdout: true,
+                    stderr: true
+                },
+                command: 'rm src/*.js; rm test/*.js'
             }
         },
         concat: {
@@ -51,7 +58,7 @@ module.exports = function(grunt) {
                       'test/browser/browsertest.js'],
                 dest: 'dist/JSAlgorithms.js'
             }
-        }
+        },
     });
 
     // Load the plugin that provides the "uglify" task.
@@ -63,6 +70,7 @@ module.exports = function(grunt) {
     // Default task(s).
     // grunt.registerTask('default', ['uglify']);
     grunt.registerTask('mocha', 'shell:mocha');
+    grunt.registerTask('clean', 'shell:clean');
     grunt.registerTask('compileTS', 'shell:compileTS');
     grunt.registerTask('build', ['concat', 'uglify', 'shell:copyMin']);
 

@@ -8,27 +8,27 @@ declare function setModule(name: string, mod: any);
 var M2D = Matrix.Matrix2D;
 
 
-module Graphs {
+module ImgGraphs {
 
     export interface Edge {
         p1: Array<number>   // Source Pixel
         p2: Array<number>   // Destination Pixel
         w: number           // Weight
     }
-
-    export class Graph {
+    
+    export class ImgGraph {
         edge_list: Edge[];
 
-        constructor(private adj_list: Matrix.Matrix2D, sort?:boolean, up?:boolean) {
+        constructor(private adj_list: Matrix.Matrix2D, sort?:boolean, asc?:boolean) {
             this.edge_list = this.computeEdgeList();
             if( sort ) {
-                this.sort(up);
+                this.sort(asc);
             }
         }
 
-        sort(up:boolean = true) {
+        sort(asc:boolean = true) {
             var sortfunc;
-            if( up ) {
+            if( asc ) {
                 sortfunc = function(a, b) {return a.w - b.w};
             }
             else {
@@ -77,5 +77,5 @@ module Graphs {
 
     }
 
-    setModule('Graphs', Graphs);
+    setModule('ImgGraphs', ImgGraphs);
 }

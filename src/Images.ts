@@ -5,7 +5,7 @@
 declare function setModule(name: string, mod: any);
 
 var M2D = Matrix.Matrix2D;
-declare var Uint8ClampedArray;
+
 
 module Images {
 
@@ -85,7 +85,7 @@ module Images {
             return this.matrix.getIndex(i, j);
         }
 
-        toRgbaArray() : Array<number> {
+        toRgbaArray() : Uint8ClampedArray {
             var rgba = new Uint8ClampedArray( this.width * this.height * 4);
             var pixels = this.matrix.getArray();
             var pos = 0;
