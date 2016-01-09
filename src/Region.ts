@@ -1,12 +1,9 @@
-/// <reference path="../tsrefs/node.d.ts" />
-/// <reference path="./Helper.ts" />
-/// <reference path="./Matrix.ts" />
+/// <reference path="../typings/tsd.d.ts" />
 
 
 declare function setModule(name: string, mod: any);
 
 var M2D = Matrix.Matrix2D;
-
 
 module Regions {
 
@@ -52,7 +49,7 @@ module Regions {
             }
         }
 
-        merge(r1: Region, r2: Region, e: Graphs.Edge) {
+        merge(r1: Region, r2: Region, e: ImgGraphs.Edge) {
 
             // Set new internal maxEdge
             r1.maxEdge = e.w;

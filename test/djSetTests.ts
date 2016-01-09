@@ -1,11 +1,4 @@
-/**
- * Created by bernd on 19.05.14.
- */
-
-/// <reference path="../tsrefs/node.d.ts" />
-/// <reference path="../tsrefs/mocha.d.ts" />
-/// <reference path="../tsrefs/chai.d.ts" />
-/// <reference path="../src/DisjointSet.ts" />
+/// <reference path="../typings/tsd.d.ts" />
 
 
 var expect = require('chai').expect;

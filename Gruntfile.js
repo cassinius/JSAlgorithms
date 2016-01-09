@@ -54,7 +54,7 @@ module.exports = function(grunt) {
                 separator: ''
             },
             dist: {
-                src: ['src/Helper.js', 'src/Matrix.js', 'src/DisjointSet.js', 'src/Images.js', 'src/Graphs.js', 'src/Region.js',
+                src: ['src/Helper.js', 'src/Matrix.js', 'src/DisjointSet.js', 'src/Images.js', 'src/ImgGraphs.js', 'src/Region.js',
                       'test/browser/browsertest.js'],
                 dest: 'dist/JSAlgorithms.js'
             }
@@ -72,6 +72,6 @@ module.exports = function(grunt) {
     grunt.registerTask('mocha', 'shell:mocha');
     grunt.registerTask('clean', 'shell:clean');
     grunt.registerTask('compileTS', 'shell:compileTS');
-    grunt.registerTask('build', ['concat', 'uglify', 'shell:copyMin']);
+    grunt.registerTask('build', ['compileTS', 'concat', 'uglify', 'shell:copyMin']);
 
 };

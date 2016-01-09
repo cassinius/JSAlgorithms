@@ -1,6 +1,4 @@
-/// <reference path="../tsrefs/node.d.ts" />
-/// <reference path="./Helper.ts" />
-/// <reference path="./Matrix.ts" />
+/// <reference path="../typings/tsd.d.ts" />
 
 declare function setModule(name: string, mod: any);
 
@@ -85,8 +83,8 @@ module Images {
             return this.matrix.getIndex(i, j);
         }
 
-        toRgbaArray() : Uint8ClampedArray {
-            var rgba = new Uint8ClampedArray( this.width * this.height * 4);
+        toRgbaArray() : Uint8Array {
+            var rgba = new Uint8Array( this.width * this.height * 4);
             var pixels = this.matrix.getArray();
             var pos = 0;
             for( var i = 0; i < pixels.length; ++i ) {

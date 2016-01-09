@@ -1,9 +1,4 @@
-/**
- * Created by bernd on 19.05.14.
- */
-
-/// <reference path="../tsrefs/node.d.ts" />
-/// <reference path="./Helper.ts" />
+/// <reference path="../typings/tsd.d.ts" />
 
 declare function setModule(name: string, mod: any);
 

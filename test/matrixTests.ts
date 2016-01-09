@@ -1,7 +1,4 @@
-/// <reference path="../tsrefs/node.d.ts" />
-/// <reference path="../tsrefs/mocha.d.ts" />
-/// <reference path="../tsrefs/chai.d.ts" />
-/// <reference path="../src/Matrix.ts" />
+/// <reference path="../typings/tsd.d.ts" />
 
 var expect = require('chai').expect;
 require('../src/Helper.js');
