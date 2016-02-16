@@ -1518,13 +1518,28 @@ var buildGraphObject = function() {
 						nr_nodes++;
         }
 
-        var edges = [];
+        var edges = [],
+            i_1,
+            i_2,
+            r_i_1,
+            r_i_2,
+            i_1_col_diff,
+            i_2_col_diff;
 
         if (i % 3 === 0) {
-            edges = [triangles[i+1], triangles[i+2]];
+            i_1 = triangles[i+1];
+            i_2 = triangles[i+2];
+            r_i_1 = vertices_map[i_1];
+            r_i_2 = vertices_map[i_2];
+            i_1_col_diff = ( parseFloat(region.avg_color.toFixed(2)) - parseFloat(r_i_1.avg_color.toFixed(2)) ).toFixed(2);
+            i_2_col_diff = ( parseFloat(region.avg_color.toFixed(2)) - parseFloat(r_i_2.avg_color.toFixed(2)) ).toFixed(2);
+            edges = [i_1 + " u " + i_1_col_diff, i_2 + " u " + i_2_col_diff];
         }
         else if (i % 3 === 1) {
-            edges = [triangles[i+1]];
+            i_1 = triangles[i+1];
+            r_i_1 = vertices_map[i_1];
+            i_1_col_diff = parseFloat(region.avg_color.toFixed(2)) - parseFloat(r_i_1.avg_color.toFixed(2));
+            edges = [i_1 + " u " + i_1_col_diff];
         }
         else if (i % 3 === 2) {
             edges = [];
@@ -1591,7 +1606,7 @@ var drawGraph = function() {
     for ( var i = 0; i < node_keys.length; i++ ) {
         var node = outGraph.data[node_keys[i]];
         for (var e = 0; e < node.edges.length; e++) {
-            var edge = node.edges[e];
+            var edge = node.edges[e].split(" ")[0];
             delctx.beginPath();
             delctx.moveTo(node.coords.x, node.coords.y);
             delctx.lineTo(outGraph.data[edge].coords.x, outGraph.data[edge].coords.y);
