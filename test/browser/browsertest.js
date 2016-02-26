@@ -581,7 +581,7 @@ var computeNeighborhoods8 = function() {
 ///////////////////////////////////////////////////////////
 var computeEdgeList = function() {
     delete window.graph;
-    
+
     var start = new Date().getTime();
     setGlobals();
 
@@ -618,7 +618,7 @@ var startGraphExtraction = function(algo, callback) {
         case "kruskalrm":   algoToExecute = kruskalRegionMerging;
                             break;
         case "watershed":   algoToExecute = watershed;
-                            break; 
+                            break;
     }
     //setTimeout(function() {
         // execute Main Image Segmentation Algorithm
@@ -634,7 +634,7 @@ var startGraphExtraction = function(algo, callback) {
         computeDelauney();
 
         // and draw it
-        //drawDelauney();
+        // drawDelauney();
 
         // now let's construct the graph object
         buildGraphObject();
@@ -698,14 +698,14 @@ var watershed = function() {
       if (v[p] != 1)  {
         var min = vmax;
         var nbs = al[p];
-        
+
         for (var i = 0; i < nbs.length; ++i) {
           var n_i = grayImg.getPixelIndex(nbs[i][0], nbs[i][1]);
           if (f[n_i] == f[p] && v[n_i] > 0 && v[n_i] < min) {
             min = v[n_i];
           }
         }
-        
+
         if ( min != vmax && v[p] != min+1) {
           v[p] = min+1;
           changed = 1;
@@ -721,7 +721,7 @@ var watershed = function() {
           changed = 0,
           n_i = 0,
           i = 0;
-          
+
       if (v[p] == 0) {
         for (i = 0; i < nbs.length; ++i) {
           n_i = grayImg.getPixelIndex(nbs[i][0], nbs[i][1]);
@@ -732,7 +732,7 @@ var watershed = function() {
         if (lmin == lmax && l[p] == 0) {
           lmin = ++new_label;
           numb_regions++;
-        }    
+        }
       }
       else if (v[p] == 1) {
         for (i = 0; i < nbs.length; ++i) {
@@ -756,7 +756,7 @@ var watershed = function() {
           }
         }
       }
-      if (lmin != lmax && lmin != l[p]) { 
+      if (lmin != lmax && lmin != l[p]) {
         l[p] = lmin;
         changed = 1;
       }
@@ -767,7 +767,7 @@ var watershed = function() {
     window.grayImg = new Images.GrayImage(width, height, img.data);
     var msg = "Converted to Gray Image...";
     updateProgress(msg);
-    
+
     window.adj_list = grayImg.computeNeighborhoods8();
     msg = "Constructed Adjacency List...";
     updateProgress(msg);
@@ -780,17 +780,17 @@ var watershed = function() {
     window.lmax = window.l_thres;
     window.new_label = 0;
     window.numb_regions = 0;
-       
+
     var i = width*height,
         scan_step2 = 1,
         scan_step3 = 1,
-        p;                 
-        
+        p;
+
     while(i) {
       v[--i] = 0;
       l[i] = 0;
     }
-    
+
     for( p = 0; p < width*height; ++p) {
         step1(p);
     }
@@ -819,12 +819,12 @@ var watershed = function() {
      }
      if(scan_step3) {
        scan_step3 = 0;
-       for( p = width*height; p;) {   
+       for( p = width*height; p;) {
          if(step3(--p) == 1) {
            scan_step3 = 1;
          }
        }
-     }     
+     }
    }
 
    window.rMap = new Regions.RegionMap(width, height, grayImg);
@@ -836,9 +836,9 @@ var watershed = function() {
 
    for ( var i = 0; i < labelmap.length; ++i ) {
         if ( labelmap[i] !== i ) { // original region merged into another
-            r = rMap.getRegionByIndex( labelmap[i] );           
+            r = rMap.getRegionByIndex( labelmap[i] );
             // Set new avg color (as integer)
-            r.avg_color = ( ( r.avg_color * r.size + img_arr[i] ) / ( r.size + 1 ) ) | 0;            
+            r.avg_color = ( ( r.avg_color * r.size + img_arr[i] ) / ( r.size + 1 ) ) | 0;
             // Set new centroid
             x = i % width >>> 0;
             y = (i / width) >>> 0;
@@ -1004,7 +1004,7 @@ var computeDelauney = function() {
 /////////////// BUILDING THE GRAPH OBJECT /////////////////
 ///////////////////////////////////////////////////////////
 var buildGraphObject = function() {
-	
+
     window.outGraph.data = {};
     var nr_edges = 0;
     var region,
@@ -1022,7 +1022,6 @@ var buildGraphObject = function() {
                     y: parseFloat(region.centroid[1].toFixed(2)),
                     z: parseFloat(region.avg_color.toFixed(2))
                 },
-                //features: {},
                 edges: []
             };
 						nr_nodes++;
@@ -1043,39 +1042,45 @@ var buildGraphObject = function() {
             r_i_2 = vertices_map[i_2];
             i_1_col_diff = ( parseFloat(region.avg_color.toFixed(2)) - parseFloat(r_i_1.avg_color.toFixed(2)) ).toFixed(2);
             i_2_col_diff = ( parseFloat(region.avg_color.toFixed(2)) - parseFloat(r_i_2.avg_color.toFixed(2)) ).toFixed(2);
-            edges = [i_1 + " u " + i_1_col_diff, i_2 + " u " + i_2_col_diff];
+            edges = [
+              { 
+                to: i_1,
+                directed: false,
+                weight: i_1_col_diff
+              },
+              { 
+                to: i_2,
+                directed: false,
+                weight: i_2_col_diff
+              }
+            ];
         }
         else if (i % 3 === 1) {
             i_1 = triangles[i+1];
             r_i_1 = vertices_map[i_1];
             i_1_col_diff = parseFloat(region.avg_color.toFixed(2)) - parseFloat(r_i_1.avg_color.toFixed(2));
-            edges = [i_1 + " u " + i_1_col_diff];
+            edges = [
+              { 
+                to: i_1,
+                directed: false,
+                weight: i_1_col_diff
+              }
+            ];
         }
         else if (i % 3 === 2) {
             edges = [];
         }
 
         for (var n = 0; n < edges.length; n++) {
-            var tri_node = edges[n];
-            // tri_node must not be same node
+            var edge = edges[n],
+            tri_node = edge.to;
+            // other node must not be same node
             if (tri_node === tri) {
                 continue;
-            }
-
-            var duplicate_edge = false;
-            if (typeof outGraph.data[tri_node] !== 'undefined') {
-                var other_edges = outGraph.data[tri_node].edges;
-
-                if ( other_edges.includes(tri) ) {
-                    duplicate_edge = true;
-                }
-            }
-
-            if ( outGraph.data[tri].edges.includes(tri_node) ) {
-                duplicate_edge = true;
-            }
-            if ( !duplicate_edge ) {
-                outGraph.data[tri].edges.push(tri_node);
+            }                   
+            
+            if ( !isEdgeDuplicate(tri, edge) ) {
+                outGraph.data[tri].edges.push(edge);
                 nr_edges++;
             }
         }
@@ -1088,6 +1093,34 @@ var buildGraphObject = function() {
     msg = "Nodes: " + nr_nodes + ", Edges: " + nr_edges + " Time: ";
     updateProgress(msg);
 };
+
+
+var isEdgeDuplicate = function(tri, edge) {
+  var tri_node = edge.to,
+      duplicate_edge = false;
+  
+  // Check if I already hold this edge (for whatever reason??)
+  var my_edges = outGraph.data[tri].edges;
+  for (var my_edge in my_edges) {
+    if ( my_edges[my_edge].to === tri_node ) {
+        duplicate_edge = true;
+    }
+  }
+  
+  // Check if the target node already holds an edge towards me...
+  if (typeof outGraph.data[tri_node] !== 'undefined') {
+      var other_edges = outGraph.data[tri_node].edges;
+
+      for ( var other_edge in other_edges) {
+        if ( other_edges[other_edge].to === tri ) {
+          duplicate_edge = true;
+        }
+      }
+      
+  }
+  
+  return duplicate_edge;
+}
 
 
 ///////////////////////////////////////////////////////////
@@ -1116,10 +1149,10 @@ var drawGraph = function() {
     for ( var i = 0; i < node_keys.length; i++ ) {
         var node = outGraph.data[node_keys[i]];
         for (var e = 0; e < node.edges.length; e++) {
-            var edge = node.edges[e].split(" ")[0];
+            var target = node.edges[e].to;
             delctx.beginPath();
             delctx.moveTo(node.coords.x, node.coords.y);
-            delctx.lineTo(outGraph.data[edge].coords.x, outGraph.data[edge].coords.y);
+            delctx.lineTo(outGraph.data[target].coords.x, outGraph.data[target].coords.y);
             delctx.stroke();
         }
     }
