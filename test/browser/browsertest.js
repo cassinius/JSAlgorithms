@@ -441,11 +441,12 @@ var Regions;
     *
     */
     var RegionMap = (function () {
-        function RegionMap(width, height, img) {
+        function RegionMap(width, height, img, orig_img) {
             this.regions = {};
             this.labels = new M2D(width, height);
             var arr = this.labels.getArray();
             var img_arr = img.getArray();
+            var orig_img_arr = orig_img.data;
             var x, y, region;
             for (var i = 0; i < arr.length; ++i) {
                 arr[i] = i;
@@ -453,6 +454,7 @@ var Regions;
                 // TODO outsource this to region class
                 region.size = 1;
                 region.avg_color = img_arr[i];
+                region.avg_orig_color = [orig_img_arr[4 * i], orig_img_arr[4 * i + 1], orig_img_arr[4 * i + 2]];
                 x = i % width >>> 0;
                 y = (i / width) >>> 0;
                 //                region.pixels.push( [ x, y, img_arr[i] ]);
@@ -463,8 +465,12 @@ var Regions;
         RegionMap.prototype.merge = function (r1, r2, e) {
             // Set new internal maxEdge
             r1.maxEdge = e.w;
-            // Set new avg color (as integer)
+            // Set new avg GREY color (as integer)
             r1.avg_color = ((r1.avg_color * r1.size + r2.avg_color * r2.size) / (r1.size + r2.size)) | 0;
+            // Set new avg ORIGINAL color
+            r1.avg_orig_color[0] = ((r1.avg_orig_color[0] * r1.size + r2.avg_orig_color[0] * r2.size) / (r1.size + r2.size)) | 0;
+            r1.avg_orig_color[1] = ((r1.avg_orig_color[1] * r1.size + r2.avg_orig_color[1] * r2.size) / (r1.size + r2.size)) | 0;
+            r1.avg_orig_color[2] = ((r1.avg_orig_color[2] * r1.size + r2.avg_orig_color[2] * r2.size) / (r1.size + r2.size)) | 0;
             var sum_size = r1.size + r2.size;
             // Set the centroid and update the size (we assume 2D centroids)
             r1.centroid[0] = (r1.centroid[0] * r1.size + r2.centroid[0] * r2.size) / sum_size;
@@ -481,7 +487,7 @@ var Regions;
             return this.regions[idx];
         };
         return RegionMap;
-    })();
+    }());
     Regions.RegionMap = RegionMap;
     var Region = (function () {
         function Region(id) {
@@ -489,6 +495,7 @@ var Regions;
             // TODO: WHY OH WHY IS THE TYPE SYSTEM SO SHY ???
             this.size = 0;
             this.avg_color = 0;
+            this.avg_orig_color = [0, 0, 0];
             this.centroid = [];
             this.maxEdge = 0;
             this.pixels = [];
@@ -496,10 +503,12 @@ var Regions;
             this.deleted = false;
         }
         return Region;
-    })();
+    }());
     Regions.Region = Region;
     setModule('Regions', Regions);
 })(Regions || (Regions = {}));
+
+
 ///////////////////////////////////////////////////////////
 /////////////// WRITE MESSAGE TO INFO BOX /////////////////
 ///////////////////////////////////////////////////////////
@@ -671,7 +680,7 @@ var prepareDataStructures = function() {
     msg = "Instantiated original Graph...";
     updateProgress(msg);
 
-    window.rMap = new Regions.RegionMap(width, height, grayImg);
+    window.rMap = new Regions.RegionMap(width, height, grayImg, img);
     window.djs = new DJSet.DisjointSet(width * height);
     msg = "Constructed Region Map...\n STARTING REGION MERGING...";
     updateProgress(msg);
@@ -1016,6 +1025,13 @@ var buildGraphObject = function() {
         region = vertices_map[tri];
         if ( typeof outGraph.data[tri] === 'undefined' ) {
             outGraph.data[tri] = {
+                features: {
+                  color: {
+                    r: region.avg_orig_color[0],
+                    g: region.avg_orig_color[1],
+                    b: region.avg_orig_color[2]
+                  }
+                },
                 node: tri,
                 coords: {
                     x: parseFloat(region.centroid[0].toFixed(2)),
@@ -1043,12 +1059,12 @@ var buildGraphObject = function() {
             i_1_col_diff = ( parseFloat(region.avg_color.toFixed(2)) - parseFloat(r_i_1.avg_color.toFixed(2)) ).toFixed(2);
             i_2_col_diff = ( parseFloat(region.avg_color.toFixed(2)) - parseFloat(r_i_2.avg_color.toFixed(2)) ).toFixed(2);
             edges = [
-              { 
+              {
                 to: i_1,
                 directed: false,
                 weight: i_1_col_diff
               },
-              { 
+              {
                 to: i_2,
                 directed: false,
                 weight: i_2_col_diff
@@ -1060,7 +1076,7 @@ var buildGraphObject = function() {
             r_i_1 = vertices_map[i_1];
             i_1_col_diff = parseFloat(region.avg_color.toFixed(2)) - parseFloat(r_i_1.avg_color.toFixed(2));
             edges = [
-              { 
+              {
                 to: i_1,
                 directed: false,
                 weight: i_1_col_diff
@@ -1077,8 +1093,8 @@ var buildGraphObject = function() {
             // other node must not be same node
             if (tri_node === tri) {
                 continue;
-            }                   
-            
+            }
+
             if ( !isEdgeDuplicate(tri, edge) ) {
                 outGraph.data[tri].edges.push(edge);
                 nr_edges++;
@@ -1098,7 +1114,7 @@ var buildGraphObject = function() {
 var isEdgeDuplicate = function(tri, edge) {
   var tri_node = edge.to,
       duplicate_edge = false;
-  
+
   // Check if I already hold this edge (for whatever reason??)
   var my_edges = outGraph.data[tri].edges;
   for (var my_edge in my_edges) {
@@ -1106,7 +1122,7 @@ var isEdgeDuplicate = function(tri, edge) {
         duplicate_edge = true;
     }
   }
-  
+
   // Check if the target node already holds an edge towards me...
   if (typeof outGraph.data[tri_node] !== 'undefined') {
       var other_edges = outGraph.data[tri_node].edges;
@@ -1116,9 +1132,9 @@ var isEdgeDuplicate = function(tri, edge) {
           duplicate_edge = true;
         }
       }
-      
+
   }
-  
+
   return duplicate_edge;
 }
 

@@ -11,6 +11,7 @@ module Regions {
         id: number
         size: number
         avg_color: number
+        avg_orig_color: Array<number>;
         centroid: Array<any>
         maxEdge: number
         pixels: Array<any>
@@ -26,10 +27,13 @@ module Regions {
         labels: Matrix.Matrix2D;
         regions: {} = {};
 
-        constructor(width: number, height: number, img: Images.GrayImage) {
+        constructor(width: number, height: number,
+                    img: Images.GrayImage, orig_img: ImageData) {
+
             this.labels = new M2D(width, height);
             var arr = this.labels.getArray();
             var img_arr = img.getArray();
+            var orig_img_arr = orig_img.data;
             var x: number,
                 y: number,
                 region: Region;
@@ -41,6 +45,7 @@ module Regions {
                 // TODO outsource this to region class
                 region.size = 1;
                 region.avg_color = img_arr[i];
+                region.avg_orig_color = [orig_img_arr[4*i], orig_img_arr[4*i+1], orig_img_arr[4*i+2] ];
                 x = i % width >>> 0;
                 y = (i / width) >>> 0;
 //                region.pixels.push( [ x, y, img_arr[i] ]);
@@ -54,8 +59,13 @@ module Regions {
             // Set new internal maxEdge
             r1.maxEdge = e.w;
 
-            // Set new avg color (as integer)
+            // Set new avg GREY color (as integer)
             r1.avg_color = ( ( r1.avg_color * r1.size + r2.avg_color * r2.size ) / ( r1.size + r2.size ) ) | 0;
+
+            // Set new avg ORIGINAL color
+            r1.avg_orig_color[0] = ( ( r1.avg_orig_color[0] * r1.size + r2.avg_orig_color[0] * r2.size ) / ( r1.size + r2.size )) | 0;
+            r1.avg_orig_color[1] = ( ( r1.avg_orig_color[1] * r1.size + r2.avg_orig_color[1] * r2.size ) / ( r1.size + r2.size )) | 0;
+            r1.avg_orig_color[2] = ( ( r1.avg_orig_color[2] * r1.size + r2.avg_orig_color[2] * r2.size ) / ( r1.size + r2.size )) | 0;
 
             var sum_size = r1.size + r2.size;
             // Set the centroid and update the size (we assume 2D centroids)
@@ -83,6 +93,7 @@ module Regions {
         // TODO: WHY OH WHY IS THE TYPE SYSTEM SO SHY ???
         size: number = 0;
         avg_color: number = 0;
+        avg_orig_color:  Array<number> = [0, 0, 0];
         centroid: Array<any> = [];
         maxEdge: number = 0;
         pixels: Array<any> = [];
