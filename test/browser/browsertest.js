@@ -1062,12 +1062,12 @@ var buildGraphObject = function() {
               {
                 to: i_1,
                 directed: false,
-                weight: i_1_col_diff
+                weight: Math.abs(i_1_col_diff)
               },
               {
                 to: i_2,
                 directed: false,
-                weight: i_2_col_diff
+                weight: Math.abs(i_2_col_diff)
               }
             ];
         }
@@ -1079,7 +1079,7 @@ var buildGraphObject = function() {
               {
                 to: i_1,
                 directed: false,
-                weight: i_1_col_diff
+                weight: Math.abs(i_1_col_diff)
               }
             ];
         }
