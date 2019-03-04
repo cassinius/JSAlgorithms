@@ -1165,10 +1165,18 @@ var drawGraph = function() {
     for ( var i = 0; i < node_keys.length; i++ ) {
         var node = outGraph.data[node_keys[i]];
         for (var e = 0; e < node.edges.length; e++) {
-            var target = node.edges[e].to;
+            var target = outGraph.data[node.edges[e].to];
             delctx.beginPath();
             delctx.moveTo(node.coords.x, node.coords.y);
-            delctx.lineTo(outGraph.data[target].coords.x, outGraph.data[target].coords.y);
+            delctx.lineTo(target.coords.x, target.coords.y);
+
+            var linearGradient = delctx.createLinearGradient(
+                node.coords.x, node.coords.y,
+                target.coords.x, target.coords.y
+            );
+            linearGradient.addColorStop(0, 'rgb('+node.features.color.r+','+node.features.color.g+','+node.features.color.b+')' );
+            linearGradient.addColorStop(1, 'rgb('+target.features.color.r+','+target.features.color.g+','+target.features.color.b+')' );
+            delctx.strokeStyle = linearGradient;
             delctx.stroke();
         }
     }
